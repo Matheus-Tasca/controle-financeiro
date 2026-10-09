@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Controle Financeiro - Página Inicial</title>
+    <!-- Importando o Tailwind via CDN para desenvolvimento rápido -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Estilos específicos que estendem o Tailwind -->
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body
+    data-page="pagina_inicial"
+    class="bg-gray-900 text-gray-100 font-sans antialiased h-screen flex overflow-hidden"
+  >
+    <!-- Sidebar (Navegação Principal) -->
+    <aside
+      class="w-64 bg-gray-800 border-r border-gray-700 hidden md:flex flex-col"
+    >
+      <div class="p-8 pb-4">
+        <h2 class="text-2xl font-bold text-green-400">FinanceApp</h2>
+      </div>
+      <div id="navbar-placeholder"></div>
+    </aside>
+
+    <!-- Header Mobile (Hambúrguer) -->
+    <div
+      class="md:hidden absolute top-0 left-0 w-full bg-gray-800 p-4 border-b border-gray-700 flex justify-between items-center z-10"
+    >
+      <h2 class="text-xl font-bold text-green-400">FinanceApp</h2>
+      <button
+        id="mobile-menu-btn"
+        class="text-gray-300 hover:text-white focus:outline-none"
+      >
+        <!-- Ícone de Menu -->
+        <svg
+          class="w-6 h-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M4 6h16M4 12h16M4 18h16"
+          ></path>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Conteúdo Principal -->
+    <main
+      class="flex-1 flex flex-col h-full relative pt-16 md:pt-0 overflow-y-auto"
+    >
+      <div class="p-6 md:p-10 max-w-6xl mx-auto w-full">
+        <!-- Título do Dashboard -->
+        <header class="mb-10 text-center flex justify-center">
+          <h1 class="text-2xl md:text-3xl font-medium text-gray-100 pb-2">
+            Últimos 30 dias
+          </h1>
+        </header>
+
+        <!-- Seção de Cards de Resumo -->
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+          <!-- Entradas -->
+          <div
+            class="bg-gray-900 border border-gray-700 rounded-lg p-6 shadow-sm flex flex-col items-center"
+          >
+            <h3
+              class="text-gray-200 text-sm md:text-base font-normal tracking-wide mb-3"
+            >
+              entradas totais
+            </h3>
+            <p id="total-incomes" class="text-2xl font-semibold text-white">
+              R$ 0,00
+            </p>
+          </div>
+
+          <!-- Saídas -->
+          <div
+            class="bg-gray-900 border border-gray-700 rounded-lg p-6 shadow-sm flex flex-col items-center"
+          >
+            <h3
+              class="text-gray-200 text-sm md:text-base font-normal tracking-wide mb-3"
+            >
+              saidas totais
+            </h3>
+            <p id="total-expenses" class="text-2xl font-semibold text-white">
+              R$ 0,00
+            </p>
+          </div>
+
+          <!-- Saldo -->
+          <div
+            class="bg-gray-900 border border-gray-700 rounded-lg p-6 shadow-sm flex flex-col items-center"
+          >
+            <h3
+              class="text-gray-200 text-sm md:text-base font-normal tracking-wide mb-3"
+            >
+              saldo
+            </h3>
+            <p id="total-balance" class="text-2xl font-semibold text-white">
+              R$ 0,00
+            </p>
+          </div>
+        </section>
+
+        <section
+          class="border border-gray-700 rounded-lg shadow-sm overflow-hidden bg-gray-900 p-2 md:p-6"
+        >
+          <div class="text-center mb-6 mt-4">
+            <h2 class="text-lg md:text-xl font-medium text-gray-200">
+              Categorias com maiores gastos
+            </h2>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse table-fixed">
+              <thead>
+                <tr class="text-gray-300 text-sm tracking-wide">
+                  <th class="px-4 py-3 font-medium text-center w-1/2">
+                    Categoria
+                  </th>
+                  <th
+                    class="px-4 py-3 font-medium text-center w-1/2 border-l border-gray-700"
+                  >
+                    Total
+                  </th>
+                </tr>
+              </thead>
+              <tbody id="categories-table-body" class="text-sm md:text-base">
+                <!-- População via JavaScript -->
+                <tr>
+                  <td
+                    class="py-6 text-center text-gray-500 border-t border-gray-700"
+                  >
+                    Carregando...
+                  </td>
+                  <td
+                    class="py-6 text-center text-gray-500 border-t border-l border-gray-700"
+                  >
+                    Carregando...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <div id="mobile-navbar-placeholder"></div>
+    <script src="../components/auth.js"></script>
+    <script src="../components/navbar.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>

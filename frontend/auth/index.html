@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Acesso | Controle Financeiro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body
+    class="min-h-screen bg-gray-950 text-gray-100 flex items-center justify-center p-4"
+  >
+    <main
+      class="w-full max-w-md rounded-2xl border border-gray-800 bg-gray-900 p-7 shadow-xl"
+    >
+      <h1 class="text-2xl font-semibold">Controle Financeiro</h1>
+      <p class="mt-2 text-sm text-gray-400">
+        Entre ou crie sua conta para continuar.
+      </p>
+      <div class="mt-6 grid grid-cols-2 gap-2 rounded-lg bg-gray-800 p-1">
+        <button
+          id="show-login"
+          class="rounded-md bg-gray-700 px-3 py-2 text-sm"
+        >
+          Entrar
+        </button>
+        <button
+          id="show-register"
+          class="rounded-md px-3 py-2 text-sm text-gray-400"
+        >
+          Criar conta
+        </button>
+      </div>
+      <form id="login-form" class="mt-6 space-y-4">
+        <label class="block text-sm"
+          >Usuário
+          <input
+            name="username"
+            required
+            autocomplete="username"
+            class="mt-1 w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2"
+          />
+        </label>
+        <label class="block text-sm"
+          >Senha
+          <input
+            name="password"
+            required
+            type="password"
+            autocomplete="current-password"
+            class="mt-1 w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2"
+          />
+        </label>
+        <button
+          class="w-full rounded-lg bg-green-600 px-4 py-2.5 font-medium hover:bg-green-500"
+        >
+          Entrar
+        </button>
+      </form>
+      <form id="register-form" class="mt-6 hidden space-y-4">
+        <label class="block text-sm"
+          >Usuário
+          <input
+            name="username"
+            required
+            autocomplete="username"
+            class="mt-1 w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2"
+          />
+        </label>
+        <label class="block text-sm"
+          >Senha (mínimo 8 caracteres)
+          <input
+            name="password"
+            required
+            minlength="8"
+            type="password"
+            autocomplete="new-password"
+            class="mt-1 w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2"
+          />
+        </label>
+        <button
+          class="w-full rounded-lg bg-green-600 px-4 py-2.5 font-medium hover:bg-green-500"
+        >
+          Criar conta
+        </button>
+      </form>
+      <p
+        id="auth-message"
+        class="mt-4 min-h-5 text-sm"
+        role="status"
+        aria-live="polite"
+      ></p>
+    </main>
+    <script src="../components/auth.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>

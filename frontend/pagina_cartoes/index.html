@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Controle Financeiro - Cartões</title>
+    <!-- Importando o Tailwind via CDN para desenvolvimento rápido -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Estilos específicos que estendem o Tailwind -->
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body
+    data-page="pagina_cartoes"
+    class="bg-gray-900 text-gray-100 font-sans antialiased h-screen flex overflow-hidden"
+  >
+    <!-- Sidebar (Navegação Principal) -->
+    <aside
+      class="w-64 bg-gray-800 border-r border-gray-700 hidden md:flex flex-col"
+    >
+      <div class="p-8 pb-4">
+        <h2 class="text-2xl font-bold text-green-400">FinanceApp</h2>
+      </div>
+      <!-- Componente: frontend/components/navbar.html -->
+      <div id="navbar-placeholder"></div>
+    </aside>
+
+    <!-- Header Mobile (Hambúrguer) -->
+    <div
+      class="md:hidden absolute top-0 left-0 w-full bg-gray-800 p-4 border-b border-gray-700 flex justify-between items-center z-10"
+    >
+      <h2 class="text-xl font-bold text-green-400">FinanceApp</h2>
+      <button
+        id="mobile-menu-btn"
+        class="text-gray-300 hover:text-white focus:outline-none"
+      >
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M4 6h16M4 12h16M4 18h16"
+          ></path>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Conteúdo Principal -->
+    <main
+      class="flex-1 flex flex-col h-full relative pt-16 md:pt-0 overflow-y-auto"
+    >
+      <div class="p-6 md:p-10 max-w-6xl mx-auto w-full">
+        <header class="mb-10 text-center flex justify-center">
+          <h1 class="text-2xl md:text-3xl font-medium text-gray-100 pb-2">
+            Cartões
+          </h1>
+        </header>
+
+        <!-- Cadastro de Cartão -->
+        <section
+          class="border border-gray-700 rounded-lg shadow-sm bg-gray-900 p-4 md:p-6 mb-12"
+        >
+          <div class="text-center mb-6 mt-2">
+            <h2 class="text-lg md:text-xl font-medium text-gray-200">
+              Cadastrar novo cartão
+            </h2>
+          </div>
+
+          <form
+            id="create-card-form"
+            class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end"
+            novalidate
+          >
+            <div class="md:col-span-2">
+              <label for="create-name" class="block text-sm text-gray-300 mb-1">
+                Nome
+              </label>
+              <input
+                id="create-name"
+                name="name"
+                type="text"
+                required
+                maxlength="100"
+                placeholder="Ex.: Nubank"
+                class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-400"
+              />
+            </div>
+            <div>
+              <label
+                for="create-closing-day"
+                class="block text-sm text-gray-300 mb-1"
+              >
+                Dia de fechamento
+              </label>
+              <input
+                id="create-closing-day"
+                name="closingDay"
+                type="number"
+                min="1"
+                max="31"
+                step="1"
+                required
+                class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-400"
+              />
+            </div>
+            <div>
+              <label
+                for="create-due-day"
+                class="block text-sm text-gray-300 mb-1"
+              >
+                Dia de vencimento
+              </label>
+              <input
+                id="create-due-day"
+                name="dueDay"
+                type="number"
+                min="1"
+                max="31"
+                step="1"
+                required
+                class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-400"
+              />
+            </div>
+
+            <p
+              id="create-card-error"
+              class="md:col-span-4 text-sm text-red-400 hidden"
+            ></p>
+
+            <div class="md:col-span-4 flex justify-center">
+              <button
+                id="create-card-submit"
+                type="submit"
+                class="px-5 py-2.5 bg-green-500 hover:bg-green-600 text-gray-900 text-sm font-semibold rounded-lg transition duration-150 shadow-sm focus:outline-none focus:ring-2 focus:ring-green-300 disabled:opacity-50"
+              >
+                Cadastrar cartão
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <!-- Listagem de Cartões -->
+        <section
+          class="border border-gray-700 rounded-lg shadow-sm overflow-hidden bg-gray-900 p-2 md:p-6"
+        >
+          <div class="text-center mb-6 mt-4">
+            <h2 class="text-lg md:text-xl font-medium text-gray-200">
+              Cartões cadastrados
+            </h2>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[760px]">
+              <thead>
+                <tr class="text-gray-300 text-sm tracking-wide">
+                  <th class="px-4 py-3 font-medium text-center">Nome</th>
+                  <th class="px-4 py-3 font-medium text-center border-l border-gray-700">Status</th>
+                  <th class="px-4 py-3 font-medium text-center border-l border-gray-700">
+                    Fechamento
+                  </th>
+                  <th class="px-4 py-3 font-medium text-center border-l border-gray-700">
+                    Vencimento
+                  </th>
+                  <th class="px-4 py-3 font-medium text-center border-l border-gray-700">
+                    Transações
+                  </th>
+                  <th class="px-4 py-3 font-medium text-center border-l border-gray-700">
+                    Ações
+                  </th>
+                </tr>
+              </thead>
+              <tbody id="cards-table-body" class="text-sm md:text-base">
+                <tr>
+                  <td colspan="6" class="py-6 text-center text-gray-500">
+                    Carregando...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- Modal: Editar Cartão -->
+    <div
+      id="edit-card-modal"
+      class="modal fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 hidden opacity-0 transition-opacity duration-300"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="edit-modal-title"
+    >
+      <div
+        class="modal-container bg-gray-900 border border-gray-700 rounded-xl shadow-2xl max-w-lg w-full flex flex-col transform scale-95 transition-transform duration-300 overflow-hidden"
+      >
+        <div
+          class="px-6 py-4 border-b border-gray-800 flex justify-between items-center bg-gray-800/40"
+        >
+          <h3 id="edit-modal-title" class="text-lg font-semibold text-gray-100">
+            Editar cartão
+          </h3>
+          <button
+            type="button"
+            data-close-modal
+            class="text-gray-400 hover:text-white p-1.5 rounded-lg hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-600 transition-colors"
+            aria-label="Fechar modal"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <form id="edit-card-form" novalidate>
+          <div class="p-6 space-y-4">
+            <div>
+              <label for="edit-name" class="block text-sm text-gray-300 mb-1">Nome</label>
+              <input
+                id="edit-name"
+                type="text"
+                required
+                maxlength="100"
+                class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-400"
+              />
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label for="edit-closing-day" class="block text-sm text-gray-300 mb-1">
+                  Dia de fechamento
+                </label>
+                <input
+                  id="edit-closing-day"
+                  type="number"
+                  min="1"
+                  max="31"
+                  step="1"
+                  required
+                  class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-400"
+                />
+              </div>
+              <div>
+                <label for="edit-due-day" class="block text-sm text-gray-300 mb-1">
+                  Dia de vencimento
+                </label>
+                <input
+                  id="edit-due-day"
+                  type="number"
+                  min="1"
+                  max="31"
+                  step="1"
+                  required
+                  class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-400"
+                />
+              </div>
+            </div>
+            <p
+              id="edit-card-warning"
+              class="text-sm text-yellow-300 bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 hidden"
+            >
+              Este cartão possui transações. Ao alterar o dia de fechamento ou
+              de vencimento, as parcelas com vencimento a partir de hoje serão
+              recalculadas.
+            </p>
+            <p id="edit-card-error" class="text-sm text-red-400 hidden"></p>
+          </div>
+
+          <div class="px-6 py-3 border-t border-gray-800 flex justify-end gap-3 bg-gray-900/60">
+            <button
+              type="button"
+              data-close-modal
+              class="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white text-sm font-medium rounded-lg border border-gray-700 transition duration-150 focus:outline-none focus:ring-2 focus:ring-gray-600"
+            >
+              Cancelar
+            </button>
+            <button
+              id="edit-card-submit"
+              type="submit"
+              class="px-4 py-2 bg-green-500 hover:bg-green-600 text-gray-900 text-sm font-semibold rounded-lg transition duration-150 focus:outline-none focus:ring-2 focus:ring-green-300 disabled:opacity-50"
+            >
+              Salvar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal: Desativar Cartão -->
+    <div
+      id="delete-card-modal"
+      class="modal fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 hidden opacity-0 transition-opacity duration-300"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="delete-modal-title"
+    >
+      <div
+        class="modal-container bg-gray-900 border border-gray-700 rounded-xl shadow-2xl max-w-lg w-full flex flex-col transform scale-95 transition-transform duration-300 overflow-hidden"
+      >
+        <div
+          class="px-6 py-4 border-b border-gray-800 flex justify-between items-center bg-gray-800/40"
+        >
+          <h3 id="delete-modal-title" class="text-lg font-semibold text-gray-100">
+            Desativar cartão
+          </h3>
+          <button
+            type="button"
+            data-close-modal
+            class="text-gray-400 hover:text-white p-1.5 rounded-lg hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-600 transition-colors"
+            aria-label="Fechar modal"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <div class="p-6 space-y-4">
+          <p class="text-gray-300">
+            Desativar o cartão <strong class="delete-card-name text-white"></strong>?
+            As <strong id="delete-transactions-count"></strong> transações e parcelas
+            continuarão vinculadas a ele como histórico. O cartão não poderá ser
+            usado em novos lançamentos enquanto estiver inativo.
+          </p>
+          <p id="delete-card-error" class="text-sm text-red-400 hidden"></p>
+        </div>
+
+        <div class="px-6 py-3 border-t border-gray-800 flex justify-end gap-3 bg-gray-900/60">
+          <button
+            type="button"
+            data-close-modal
+            class="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white text-sm font-medium rounded-lg border border-gray-700 transition duration-150 focus:outline-none focus:ring-2 focus:ring-gray-600"
+          >
+            Cancelar
+          </button>
+          <button
+            id="delete-card-confirm"
+            type="button"
+            class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-semibold rounded-lg transition duration-150 focus:outline-none focus:ring-2 focus:ring-red-300 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Desativar cartão
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notificação (toast) -->
+    <div
+      id="toast"
+      class="fixed bottom-6 right-6 z-[60] px-4 py-3 rounded-lg shadow-lg text-sm font-medium hidden"
+      role="status"
+      aria-live="polite"
+    ></div>
+
+    <!-- Menu Mobile (componente: frontend/components/mobile-navbar.html) -->
+    <div id="mobile-navbar-placeholder"></div>
+
+    <script src="../components/auth.js"></script>
+    <script src="../components/navbar.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>

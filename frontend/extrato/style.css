@@ -1,0 +1,89 @@
+.date-input {
+  width: 100%;
+  border: 1px solid rgb(55 65 81);
+  border-radius: 0.5rem;
+  background: rgb(31 41 55);
+  color: rgb(243 244 246);
+  padding: 0.625rem 0.75rem;
+}
+
+.date-input:focus-visible,
+button:focus-visible {
+  outline: 2px solid rgb(74 222 128);
+  outline-offset: 2px;
+}
+
+.summary-card {
+  min-width: 0;
+  border-width: 1px;
+  border-radius: 0.5rem;
+  background: rgb(17 24 39);
+  padding: 1.25rem;
+  text-align: center;
+}
+
+.chart-scroll {
+  min-height: 14rem;
+  overflow-x: auto;
+  border-bottom: 1px solid rgb(75 85 99);
+}
+
+.chart-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+  min-width: max-content;
+  height: 13rem;
+  padding: 0.5rem 0.25rem 0;
+}
+
+.chart-item {
+  display: flex;
+  width: 4.25rem;
+  height: 100%;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.35rem;
+}
+
+.chart-value {
+  max-width: 100%;
+  overflow: hidden;
+  color: rgb(209 213 219);
+  font-size: 0.625rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chart-bar-track {
+  display: flex;
+  width: 2rem;
+  height: 9rem;
+  align-items: flex-end;
+}
+
+.chart-bar {
+  width: 100%;
+  min-height: 0.2rem;
+  border-radius: 0.4rem 0.4rem 0 0;
+  background: rgb(248 113 113);
+  transition: height 180ms ease;
+}
+
+.chart-label {
+  color: rgb(156 163 175);
+  font-size: 0.625rem;
+  white-space: nowrap;
+}
+
+#transactions-table-body tr + tr {
+  border-top: 1px solid rgb(55 65 81);
+}
+
+@media (max-width: 640px) {
+  .summary-card {
+    padding: 1rem;
+  }
+}

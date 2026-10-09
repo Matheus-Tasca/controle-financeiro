@@ -1,0 +1,30 @@
+/* style.css - Estilos específicos que fogem do utilitário Tailwind */
+
+/* Customização da barra de rolagem (Scrollbar) para combinar com o Dark Mode */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #111827; /* Tailwind bg-gray-900 */
+}
+
+::-webkit-scrollbar-thumb {
+  background: #374151; /* Tailwind bg-gray-700 */
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #4b5563; /* Tailwind bg-gray-600 */
+}
+
+/* O protótipo mostrava linhas delimitando as rows na tabela em toda sua extensão */
+tbody tr td {
+  border-top: 1px solid #374151; /* Linha horizontal separando os itens da tabela */
+}
+
+/* O hover effect para dar um feedback visual elegante na tabela */
+tbody tr:hover {
+  background-color: rgba(55, 65, 81, 0.3); /* Um hover leve na row */
+}

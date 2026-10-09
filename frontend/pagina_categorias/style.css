@@ -1,0 +1,14 @@
+/* Pequenos ajustes para componentes próprios da página de categorias. */
+#categories-table-body tr + tr {
+  border-top: 1px solid rgb(55 65 81);
+}
+
+.category-inactive {
+  opacity: 0.72;
+}
+
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid rgb(74 222 128);
+  outline-offset: 2px;
+}

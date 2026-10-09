@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Controle Financeiro - Categorias</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body data-page="categorias" class="bg-gray-900 text-gray-100 font-sans antialiased h-screen flex overflow-hidden">
+    <aside class="w-64 bg-gray-800 border-r border-gray-700 hidden md:flex flex-col">
+      <div class="p-8 pb-4"><h2 class="text-2xl font-bold text-green-400">FinanceApp</h2></div>
+      <div id="navbar-placeholder"></div>
+    </aside>
+
+    <div class="md:hidden absolute top-0 left-0 w-full bg-gray-800 p-4 border-b border-gray-700 flex justify-between items-center z-10">
+      <h2 class="text-xl font-bold text-green-400">FinanceApp</h2>
+      <button id="mobile-menu-btn" class="text-gray-300 hover:text-white" aria-label="Abrir menu">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+      </button>
+    </div>
+
+    <main class="flex-1 h-full relative pt-16 md:pt-0 overflow-y-auto">
+      <div class="p-6 md:p-10 max-w-6xl mx-auto w-full">
+        <header class="mb-10 text-center"><h1 class="text-2xl md:text-3xl font-medium">Categorias</h1></header>
+
+        <section class="border border-gray-700 rounded-lg bg-gray-900 p-4 md:p-6 mb-8">
+          <div class="text-center mb-6"><h2 class="text-lg md:text-xl font-medium text-gray-200">Cadastrar categoria</h2></div>
+          <form id="create-category-form" class="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-4 items-end" novalidate>
+            <div>
+              <label for="category-description" class="block text-sm text-gray-300 mb-1">Nome da categoria</label>
+              <input id="category-description" name="description" type="text" maxlength="100" required placeholder="Ex.: Alimentação" class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-400" />
+            </div>
+            <button id="create-category-submit" type="submit" class="px-5 py-2.5 bg-green-500 hover:bg-green-600 text-gray-900 text-sm font-semibold rounded-lg disabled:opacity-50">Cadastrar categoria</button>
+            <p id="create-category-error" class="md:col-span-2 text-sm text-red-400 hidden" role="alert"></p>
+          </form>
+        </section>
+
+        <section class="border border-gray-700 rounded-lg bg-gray-900 p-2 md:p-6 overflow-hidden">
+          <div class="text-center mb-6 mt-4"><h2 class="text-lg md:text-xl font-medium text-gray-200">Categorias cadastradas</h2></div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[520px]">
+              <thead><tr class="text-gray-300 text-sm tracking-wide">
+                <th class="px-4 py-3 font-medium text-left">Nome</th>
+                <th class="px-4 py-3 font-medium text-center border-l border-gray-700">Status</th>
+                <th class="px-4 py-3 font-medium text-center border-l border-gray-700">Ações</th>
+              </tr></thead>
+              <tbody id="categories-table-body" class="text-sm md:text-base">
+                <tr><td colspan="3" class="py-6 text-center text-gray-500">Carregando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <div id="edit-category-modal" class="modal fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 hidden opacity-0 transition-opacity duration-300" role="dialog" aria-modal="true" aria-labelledby="edit-category-title">
+      <div class="modal-container bg-gray-900 border border-gray-700 rounded-xl shadow-2xl max-w-lg w-full overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-800 flex justify-between items-center bg-gray-800/40">
+          <h3 id="edit-category-title" class="text-lg font-semibold">Editar categoria</h3>
+          <button type="button" data-close-modal class="text-gray-400 hover:text-white p-2" aria-label="Fechar">✕</button>
+        </div>
+        <form id="edit-category-form" novalidate>
+          <div class="p-6 space-y-4">
+            <div><label for="edit-category-description" class="block text-sm text-gray-300 mb-1">Nome</label><input id="edit-category-description" type="text" maxlength="100" required class="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-400" /></div>
+            <label class="flex items-center gap-3 text-sm text-gray-300"><input id="edit-category-active" type="checkbox" class="accent-green-400 h-4 w-4" /> Categoria ativa</label>
+            <p id="edit-category-error" class="text-sm text-red-400 hidden" role="alert"></p>
+          </div>
+          <div class="px-6 py-4 border-t border-gray-800 flex justify-end gap-3">
+            <button type="button" data-close-modal class="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg border border-gray-700">Cancelar</button>
+            <button id="edit-category-submit" type="submit" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-gray-900 font-semibold rounded-lg disabled:opacity-50">Salvar alterações</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="toast" class="fixed bottom-5 right-5 z-[60] hidden px-4 py-3 rounded-lg shadow-lg text-sm font-medium" role="status" aria-live="polite"></div>
+    <div id="mobile-navbar-placeholder"></div>
+    <script src="../components/auth.js"></script>
+    <script src="../components/navbar.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>

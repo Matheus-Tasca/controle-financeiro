@@ -8,6 +8,7 @@
  * @property {Date|string} [date]
  * @property {string} [paymentMethodId]
  * @property {string} [cardId]
+ * @property {number} [amount]
  */
 
 export class UpdateTransactionUseCase {
@@ -27,6 +28,7 @@ export class UpdateTransactionUseCase {
     date,
     paymentMethodId,
     cardId,
+    amount,
   }) {
     if (!id) {
       throw new Error('Transaction ID is required');
@@ -55,6 +57,17 @@ export class UpdateTransactionUseCase {
     if (paymentMethodId) transaction.paymentMethodId = paymentMethodId;
     if (cardId !== undefined) transaction.cardId = cardId;
     transaction.updatedAt = new Date();
+
+    if (transaction.installment && transaction.installment.length === 1) {
+      const singleInstallment = transaction.installment[0];
+      if (date) {
+        singleInstallment.dueDate = new Date(date);
+      }
+      if (amount !== undefined && amount !== null && Number(amount) > 0) {
+        singleInstallment.amount = Math.round(Number(amount));
+      }
+      singleInstallment.updatedAt = new Date();
+    }
 
     return await this.repository.save(transaction);
   }

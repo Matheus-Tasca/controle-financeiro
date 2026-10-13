@@ -107,4 +107,3 @@ test('GetTopCategories mantém compatibilidade com userId string', async () => {
 
   assert.deepEqual(result, [{ nome: 'Saúde', total: 10000 }]);
 });
-

@@ -31,10 +31,22 @@ export class TransactionRepository {
   }
 
   findById(id, userId) {
-    return this.transactionRepository.findOneBy({ id, userId });
+    return this.transactionRepository.findOne({
+      where: { id, userId },
+      relations: {
+        installment: true,
+      },
+    });
   }
 
-  save(transaction) {
+  async save(transaction) {
+    if (transaction.installment && transaction.installment.length > 0) {
+      return await AppDataSource.transaction(async (manager) => {
+        const saved = await manager.save(TransactionSchema, transaction);
+        await manager.save(InstallmentSchema, transaction.installment);
+        return saved;
+      });
+    }
     return this.transactionRepository.save(transaction);
   }
 
@@ -50,12 +62,21 @@ export class TransactionRepository {
       .then(Boolean);
   }
 
-  delete(id, userId) {
-    return this.transactionRepository.delete({ id, userId });
+  async delete(id, userId) {
+    return await AppDataSource.transaction(
+      async (transactionalEntityManager) => {
+        await transactionalEntityManager.delete(InstallmentSchema, {
+          transactionId: id,
+        });
+        return await transactionalEntityManager.delete(TransactionSchema, {
+          id,
+          userId,
+        });
+      }
+    );
   }
 
   async getDashboardExpenses(userId, startDate, endDate) {
-
     const result = await this.transactionRepository
       .createQueryBuilder('transaction')
       .innerJoin('transaction.installment', 'installment')
@@ -74,7 +95,6 @@ export class TransactionRepository {
   }
 
   async getDashboardIncomes(userId, startDate, endDate) {
-
     const result = await this.transactionRepository
       .createQueryBuilder('transaction')
       .innerJoin('transaction.installment', 'installment')
@@ -93,7 +113,6 @@ export class TransactionRepository {
   }
 
   async getTopCategories(userId, startDate, endDate) {
-
     return this.transactionRepository
       .createQueryBuilder('transaction')
       .innerJoin('transaction.installment', 'installment')
@@ -127,6 +146,9 @@ export class TransactionRepository {
       .addSelect('installment.installmentNumber', 'installmentNumber')
       .addSelect('installment.totalInstallments', 'totalInstallments')
       .addSelect('card.name', 'cardName')
+      .addSelect('transaction.categoryId', 'categoryId')
+      .addSelect('transaction.paymentMethodId', 'paymentMethodId')
+      .addSelect('transaction.cardId', 'cardId')
       .where('installment.dueDate BETWEEN :startDate AND :endDate', {
         startDate,
         endDate,

@@ -1,6 +1,21 @@
 const STATEMENT_API = `${window.API_BASE_URL}/financial/transactions/statement`;
+const TRANSACTIONS_API = `${window.API_BASE_URL}/financial/transactions`;
+const CATEGORIES_API = `${window.API_BASE_URL}/financial/entryCategory`;
+const PAYMENT_METHODS_API = `${window.API_BASE_URL}/financial/payment-methods`;
+const CARDS_API = `${window.API_BASE_URL}/financial/cards?activeOnly=true`;
+
+let currentTransactions = [];
+let editingTransaction = null;
+let deletingTransaction = null;
+
+let categoriesCache = null;
+let paymentMethodsCache = null;
+let cardsCache = null;
 
 document.addEventListener('DOMContentLoaded', () => {
+  initModals();
+  initEditForm();
+  initDeleteForm();
   setDefaultPeriod();
   document.getElementById('period-form').addEventListener('submit', (event) => {
     event.preventDefault();
@@ -37,9 +52,117 @@ function escapeHTML(value) {
     .replace(/'/g, '&#39;');
 }
 
+function normalize(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+}
+
+function isCreditCardMethod(method) {
+  const name = normalize(method?.name);
+  return (
+    name.includes('credito') &&
+    (name.includes('cartao') || name.includes('credit'))
+  );
+}
+
+function parseAmountToCents(rawValue) {
+  const value = String(rawValue || '')
+    .trim()
+    .replace(/\s/g, '');
+  if (!value) return null;
+  let normalized = value;
+  if (value.includes(',')) {
+    normalized = value.replace(/\./g, '').replace(',', '.');
+  }
+  if (!/^\d+(\.\d{1,2})?$/.test(normalized)) return null;
+  const amount = Number(normalized);
+  if (!Number.isFinite(amount) || amount <= 0) return null;
+  const cents = Math.round(amount * 100);
+  return Number.isSafeInteger(cents) && cents > 0 ? cents : null;
+}
+
 function displayDate(value) {
   const [year, month, day] = String(value).slice(0, 10).split('-');
   return `${day}/${month}/${year}`;
+}
+
+let toastTimeout;
+function showToast(message, type = 'success') {
+  const toast = document.getElementById('toast');
+  if (!toast) return;
+  toast.textContent = message;
+  toast.classList.remove(
+    'hidden',
+    'bg-green-500',
+    'text-gray-900',
+    'bg-red-500',
+    'text-white'
+  );
+  if (type === 'success') {
+    toast.classList.add('bg-green-500', 'text-gray-900');
+  } else {
+    toast.classList.add('bg-red-500', 'text-white');
+  }
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => toast.classList.add('hidden'), 3500);
+}
+
+function openModal(modal) {
+  if (!modal) return;
+  modal.classList.remove('hidden');
+  requestAnimationFrame(() => {
+    modal.classList.remove('opacity-0');
+    modal.classList.add('opacity-100');
+  });
+}
+
+function closeModal(modal) {
+  if (!modal) return;
+  modal.classList.remove('opacity-100');
+  modal.classList.add('opacity-0');
+  setTimeout(() => modal.classList.add('hidden'), 300);
+}
+
+function initModals() {
+  document.querySelectorAll('.modal').forEach((modal) => {
+    modal.querySelectorAll('[data-close-modal]').forEach((button) =>
+      button.addEventListener('click', () => closeModal(modal))
+    );
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal) closeModal(modal);
+    });
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      document.querySelectorAll('.modal:not(.hidden)').forEach(closeModal);
+    }
+  });
+}
+
+async function fetchOptionsData() {
+  const fetchSafe = async (url) => {
+    try {
+      const res = await fetch(url);
+      const data = await res.json();
+      return res.ok ? data.data || [] : [];
+    } catch {
+      return [];
+    }
+  };
+
+  const [categories, paymentMethods, cards] = await Promise.all([
+    categoriesCache ? Promise.resolve(categoriesCache) : fetchSafe(CATEGORIES_API),
+    paymentMethodsCache ? Promise.resolve(paymentMethodsCache) : fetchSafe(PAYMENT_METHODS_API),
+    cardsCache ? Promise.resolve(cardsCache) : fetchSafe(CARDS_API),
+  ]);
+
+  categoriesCache = categories;
+  paymentMethodsCache = paymentMethods;
+  cardsCache = cards;
+
+  return { categories, paymentMethods, cards };
 }
 
 async function loadStatement() {
@@ -59,7 +182,7 @@ async function loadStatement() {
   button.disabled = true;
   error.classList.add('hidden');
   document.getElementById('transactions-table-body').innerHTML =
-    '<tr><td colspan="5" class="py-8 text-center text-gray-500">Carregando extrato...</td></tr>';
+    '<tr><td colspan="6" class="py-8 text-center text-gray-500">Carregando extrato...</td></tr>';
 
   try {
     const query = new URLSearchParams({ startDate, endDate });
@@ -78,7 +201,7 @@ async function loadStatement() {
         : requestError.message
     );
     document.getElementById('transactions-table-body').innerHTML =
-      '<tr><td colspan="5" class="py-8 text-center text-red-400">Não foi possível carregar os lançamentos.</td></tr>';
+      '<tr><td colspan="6" class="py-8 text-center text-red-400">Não foi possível carregar os lançamentos.</td></tr>';
     document.getElementById('expenses-chart').innerHTML =
       '<p class="py-12 text-center text-gray-500">Gráfico indisponível.</p>';
   } finally {
@@ -198,12 +321,13 @@ function renderChart(dailyExpenses, startDate, endDate) {
 }
 
 function renderTransactions(transactions) {
+  currentTransactions = transactions;
   const tbody = document.getElementById('transactions-table-body');
   document.getElementById('transactions-count').textContent =
     `${transactions.length} ${transactions.length === 1 ? 'lançamento' : 'lançamentos'}`;
   if (!transactions.length) {
     tbody.innerHTML =
-      '<tr><td colspan="5" class="py-8 text-center text-gray-500">Nenhum lançamento com vencimento neste período.</td></tr>';
+      '<tr><td colspan="6" class="py-8 text-center text-gray-500">Nenhum lançamento com vencimento neste período.</td></tr>';
     return;
   }
 
@@ -228,7 +352,333 @@ function renderTransactions(transactions) {
       <td class="px-4 py-4 text-center"><span class="inline-flex px-2.5 py-1 rounded-full text-xs ${typeClass}">${typeLabel}</span></td>
       <td class="px-4 py-4 text-right font-medium whitespace-nowrap ${amountClass}">${escapeHTML(formatBRL(transaction.amount))}</td>
       <td class="px-4 py-4">${cardLabel}</td>
+      <td class="px-4 py-4 text-center whitespace-nowrap">
+        <div class="flex items-center justify-center gap-2">
+          <button
+            type="button"
+            data-action="edit"
+            data-transaction-id="${escapeHTML(transaction.transactionId)}"
+            data-installment-id="${escapeHTML(transaction.installmentId)}"
+            class="px-2.5 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-medium rounded-lg border border-gray-700 transition duration-150"
+            title="Editar transação"
+          >
+            Editar
+          </button>
+          <button
+            type="button"
+            data-action="delete"
+            data-transaction-id="${escapeHTML(transaction.transactionId)}"
+            data-installment-id="${escapeHTML(transaction.installmentId)}"
+            class="px-2.5 py-1.5 bg-gray-800 hover:bg-red-600 text-red-400 hover:text-white text-xs font-medium rounded-lg border border-gray-700 transition duration-150"
+            title="Remover transação"
+          >
+            Remover
+          </button>
+        </div>
+      </td>
     </tr>`;
     })
     .join('');
+
+  tbody.querySelectorAll('button[data-action]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const transactionId = button.dataset.transactionId;
+      const installmentId = button.dataset.installmentId;
+      const transaction = currentTransactions.find(
+        (item) =>
+          item.transactionId === transactionId &&
+          item.installmentId === installmentId
+      );
+      if (!transaction) return;
+
+      if (button.dataset.action === 'edit') {
+        openEditTransactionModal(transaction);
+      } else if (button.dataset.action === 'delete') {
+        openDeleteTransactionModal(transaction);
+      }
+    });
+  });
+}
+
+async function openEditTransactionModal(transaction) {
+  editingTransaction = transaction;
+  const modal = document.getElementById('edit-transaction-modal');
+  const errorEl = document.getElementById('edit-transaction-error');
+  errorEl.textContent = '';
+  errorEl.classList.add('hidden');
+
+  document.getElementById('edit-description').value =
+    transaction.description || '';
+  document.getElementById('edit-transaction-type').value =
+    transaction.transactionType || 'saida';
+  document.getElementById('edit-date').value =
+    transaction.transactionDate || transaction.dueDate;
+
+  const amountInput = document.getElementById('edit-amount');
+  const amountHelp = document.getElementById('edit-amount-help');
+  const isSingle = Number(transaction.totalInstallments) <= 1;
+
+  if (isSingle) {
+    amountInput.disabled = false;
+    amountInput.value = (Number(transaction.amount || 0) / 100)
+      .toFixed(2)
+      .replace('.', ',');
+    amountHelp.textContent = 'Use vírgula para os centavos. Ex.: 125,90.';
+  } else {
+    amountInput.disabled = true;
+    amountInput.value = (Number(transaction.amount || 0) / 100)
+      .toFixed(2)
+      .replace('.', ',');
+    amountHelp.textContent = `Transação dividida em ${transaction.totalInstallments} parcelas. Para alterar o valor total, remova e cadastre novamente.`;
+  }
+
+  const { categories, paymentMethods, cards } = await fetchOptionsData();
+
+  // Populate categories
+  const catSelect = document.getElementById('edit-category-id');
+  const activeCategories = categories.filter(
+    (c) => c.active !== false || c.id === transaction.categoryId
+  );
+  catSelect.innerHTML =
+    '<option value="">Selecione uma categoria</option>' +
+    activeCategories
+      .map(
+        (cat) =>
+          `<option value="${escapeHTML(cat.id)}">${escapeHTML(cat.description)}</option>`
+      )
+      .join('');
+  if (transaction.categoryId) {
+    catSelect.value = transaction.categoryId;
+  }
+
+  // Populate payment methods
+  const pmSelect = document.getElementById('edit-payment-method-id');
+  const isIncome = document.getElementById('edit-transaction-type').value === 'entrada';
+  const availableMethods = isIncome
+    ? paymentMethods.filter((method) => {
+        const name = normalize(method.name);
+        return name.includes('dinheiro') || name.includes('pix');
+      })
+    : paymentMethods;
+
+  pmSelect.innerHTML =
+    '<option value="">Selecione uma forma de pagamento</option>' +
+    availableMethods
+      .map(
+        (pm) =>
+          `<option value="${escapeHTML(pm.id)}">${escapeHTML(pm.name)}</option>`
+      )
+      .join('');
+  if (transaction.paymentMethodId) {
+    pmSelect.value = transaction.paymentMethodId;
+  }
+
+  // Populate cards
+  const cardSelect = document.getElementById('edit-card-id');
+  cardSelect.innerHTML =
+    '<option value="">Selecione um cartão</option>' +
+    cards
+      .map(
+        (card) =>
+          `<option value="${escapeHTML(card.id)}">${escapeHTML(card.name)}</option>`
+      )
+      .join('');
+  if (transaction.cardId) {
+    cardSelect.value = transaction.cardId;
+  }
+
+  updateEditCardFieldVisibility();
+  openModal(modal);
+}
+
+function updateEditCardFieldVisibility() {
+  const pmId = document.getElementById('edit-payment-method-id').value;
+  const pm = paymentMethodsCache?.find((m) => m.id === pmId);
+  const isCredit = isCreditCardMethod(pm);
+  const cardField = document.getElementById('edit-card-field');
+  const cardSelect = document.getElementById('edit-card-id');
+
+  cardField.classList.toggle('hidden', !isCredit);
+  cardSelect.required = isCredit;
+}
+
+function initEditForm() {
+  const pmSelect = document.getElementById('edit-payment-method-id');
+  pmSelect.addEventListener('change', updateEditCardFieldVisibility);
+
+  const typeSelect = document.getElementById('edit-transaction-type');
+  typeSelect.addEventListener('change', () => {
+    if (!paymentMethodsCache) return;
+    const isIncome = typeSelect.value === 'entrada';
+    const availableMethods = isIncome
+      ? paymentMethodsCache.filter((method) => {
+          const name = normalize(method.name);
+          return name.includes('dinheiro') || name.includes('pix');
+        })
+      : paymentMethodsCache;
+    const currentVal = pmSelect.value;
+    pmSelect.innerHTML =
+      '<option value="">Selecione uma forma de pagamento</option>' +
+      availableMethods
+        .map(
+          (pm) =>
+            `<option value="${escapeHTML(pm.id)}">${escapeHTML(pm.name)}</option>`
+        )
+        .join('');
+    if (availableMethods.some((m) => m.id === currentVal)) {
+      pmSelect.value = currentVal;
+    }
+    updateEditCardFieldVisibility();
+  });
+
+  const form = document.getElementById('edit-transaction-form');
+  const submitBtn = document.getElementById('edit-transaction-submit');
+  const errorEl = document.getElementById('edit-transaction-error');
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (!editingTransaction) return;
+
+    errorEl.textContent = '';
+    errorEl.classList.add('hidden');
+
+    const description = document.getElementById('edit-description').value.trim();
+    const transactionType = document.getElementById('edit-transaction-type').value;
+    const date = document.getElementById('edit-date').value;
+    const categoryId = document.getElementById('edit-category-id').value;
+    const paymentMethodId = document.getElementById('edit-payment-method-id').value;
+    const cardSelect = document.getElementById('edit-card-id');
+    const pm = paymentMethodsCache?.find((m) => m.id === paymentMethodId);
+    const isCredit = isCreditCardMethod(pm);
+    const cardId = isCredit ? cardSelect.value : null;
+
+    if (!categoryId || !paymentMethodId || !date) {
+      errorEl.textContent = 'Preencha tipo, data, categoria e forma de pagamento.';
+      errorEl.classList.remove('hidden');
+      return;
+    }
+
+    if (isCredit && !cardId) {
+      errorEl.textContent = 'Selecione o cartão para compras no crédito.';
+      errorEl.classList.remove('hidden');
+      return;
+    }
+
+    const payload = {
+      description,
+      transactionType,
+      date,
+      categoryId,
+      paymentMethodId,
+      cardId: cardId || null,
+    };
+
+    const amountInput = document.getElementById('edit-amount');
+    if (!amountInput.disabled) {
+      const amountCents = parseAmountToCents(amountInput.value);
+      if (amountCents === null) {
+        errorEl.textContent = 'Informe um valor válido maior que zero.';
+        errorEl.classList.remove('hidden');
+        return;
+      }
+      payload.amount = amountCents;
+    }
+
+    submitBtn.disabled = true;
+    try {
+      const response = await fetch(
+        `${TRANSACTIONS_API}/${encodeURIComponent(editingTransaction.transactionId)}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        }
+      );
+      const body = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(body.error || 'Não foi possível atualizar a transação.');
+      }
+
+      closeModal(document.getElementById('edit-transaction-modal'));
+      showToast('Transação atualizada com sucesso!');
+      await loadStatement();
+    } catch (err) {
+      console.error('Erro ao atualizar transação:', err);
+      errorEl.textContent =
+        err.message === 'Failed to fetch'
+          ? 'Não foi possível conectar à API.'
+          : err.message;
+      errorEl.classList.remove('hidden');
+    } finally {
+      submitBtn.disabled = false;
+    }
+  });
+}
+
+function openDeleteTransactionModal(transaction) {
+  deletingTransaction = transaction;
+  const modal = document.getElementById('delete-transaction-modal');
+  const descEl = document.getElementById('delete-transaction-desc');
+  const installmentsWarning = document.getElementById('delete-installments-warning');
+  const installmentsCount = document.getElementById('delete-installments-count');
+  const singleWarning = document.getElementById('delete-single-warning');
+  const errorEl = document.getElementById('delete-transaction-error');
+
+  errorEl.textContent = '';
+  errorEl.classList.add('hidden');
+
+  descEl.textContent = `"${transaction.description || 'Sem descrição'}" (${formatBRL(transaction.amount)})`;
+
+  const total = Number(transaction.totalInstallments);
+  if (total > 1) {
+    installmentsCount.textContent = String(total);
+    installmentsWarning.classList.remove('hidden');
+    singleWarning.classList.add('hidden');
+  } else {
+    installmentsWarning.classList.add('hidden');
+    singleWarning.classList.remove('hidden');
+  }
+
+  openModal(modal);
+}
+
+function initDeleteForm() {
+  const confirmBtn = document.getElementById('delete-transaction-confirm');
+  const errorEl = document.getElementById('delete-transaction-error');
+
+  confirmBtn.addEventListener('click', async () => {
+    if (!deletingTransaction) return;
+
+    errorEl.textContent = '';
+    errorEl.classList.add('hidden');
+    confirmBtn.disabled = true;
+
+    try {
+      const response = await fetch(
+        `${TRANSACTIONS_API}/${encodeURIComponent(deletingTransaction.transactionId)}`,
+        {
+          method: 'DELETE',
+        }
+      );
+      const body = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(body.error || 'Não foi possível remover a transação.');
+      }
+
+      closeModal(document.getElementById('delete-transaction-modal'));
+      showToast('Transação e parcelas removidas com sucesso!');
+      await loadStatement();
+    } catch (err) {
+      console.error('Erro ao remover transação:', err);
+      errorEl.textContent =
+        err.message === 'Failed to fetch'
+          ? 'Não foi possível conectar à API.'
+          : err.message;
+      errorEl.classList.remove('hidden');
+    } finally {
+      confirmBtn.disabled = false;
+    }
+  });
 }

@@ -4,6 +4,7 @@
  * @property {string} [name]
  * @property {number} [closingDay]
  * @property {number} [dueDay]
+ * @property {boolean} [active]
  */
 
 export class UpdateCardUseCase {
@@ -14,7 +15,7 @@ export class UpdateCardUseCase {
   /**
    * @param {UpdateCardDTO} data
    */
-  async execute({ id, userId, name, closingDay, dueDay }) {
+  async execute({ id, userId, name, closingDay, dueDay, active }) {
     if (!id) {
       throw new Error('Card ID is required');
     }
@@ -33,8 +34,15 @@ export class UpdateCardUseCase {
       card.name = name;
     }
 
-    if (closingDay) card.closingDay = closingDay;
-    if (dueDay) card.dueDay = dueDay;
+    if (closingDay !== undefined && closingDay !== null) {
+      card.closingDay = Number(closingDay);
+    }
+    if (dueDay !== undefined && dueDay !== null) {
+      card.dueDay = Number(dueDay);
+    }
+    if (active !== undefined && active !== null) {
+      card.active = Boolean(active);
+    }
     card.updatedAt = new Date();
 
     return await this.repository.save(card);

@@ -21,6 +21,9 @@ export class GetTransactionStatement {
       installmentNumber: Number(row.installmentNumber),
       totalInstallments: Number(row.totalInstallments),
       cardName: row.cardName || null,
+      categoryId: row.categoryId || null,
+      paymentMethodId: row.paymentMethodId || null,
+      cardId: row.cardId || null,
     }));
 
     const summary = transactions.reduce(

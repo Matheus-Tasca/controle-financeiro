@@ -291,6 +291,10 @@ function openEditModal(card) {
   document.getElementById('edit-name').value = card.name;
   document.getElementById('edit-closing-day').value = card.closingDay;
   document.getElementById('edit-due-day').value = card.dueDay;
+  const activeInput = document.getElementById('edit-card-active');
+  if (activeInput) {
+    activeInput.checked = card.active !== false;
+  }
   document
     .getElementById('edit-card-warning')
     .classList.toggle('hidden', card.transactionsCount === 0);
@@ -320,6 +324,7 @@ function initEditForm() {
 
     submitBtn.disabled = true;
     try {
+      const activeInput = document.getElementById('edit-card-active');
       const { ok, body } = await request(
         `${API_ROUTE_CARDS}/${encodeURIComponent(editingCard.id)}`,
         {
@@ -328,6 +333,7 @@ function initEditForm() {
             name: data.name.trim(),
             closingDay: Number(data.closingDay),
             dueDay: Number(data.dueDay),
+            active: activeInput ? activeInput.checked : true,
           }),
         }
       );

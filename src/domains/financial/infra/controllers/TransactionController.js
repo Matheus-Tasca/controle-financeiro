@@ -54,6 +54,7 @@ export class TransactionController {
         date: req.body?.date,
         paymentMethodId: req.body?.paymentMethodId,
         cardId: req.body?.cardId,
+        amount: req.body?.amount,
       });
 
       return res.status(200).json({
@@ -100,7 +101,7 @@ export class TransactionController {
   async getDashboard(req, res) {
     try {
       const { startDate, endDate } = req.query;
-      if (!startDate ||!endDate) {
+      if (!startDate || !endDate) {
         return res.status(400).json({
           error: 'startDate and endDate must be in YYYY-MM-DD format',
         });

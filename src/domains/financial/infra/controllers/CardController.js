@@ -55,6 +55,7 @@ export class CardController {
         name: req.body?.name,
         closingDay: req.body?.closingDay,
         dueDay: req.body?.dueDay,
+        active: req.body?.active,
       });
 
       return res.status(200).json({

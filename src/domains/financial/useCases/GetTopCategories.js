@@ -3,9 +3,12 @@ export class GetTopCategories {
     this.repository = repository;
   }
 
-  async execute(userId) {
+  async execute(input) {
+    const { userId, startDate, endDate } =
+      typeof input === 'object' && input !== null ? input : { userId: input };
+
     try {
-      return await this.repository.getTopCategories(userId);
+      return await this.repository.getTopCategories(userId, startDate, endDate);
     } catch (error) {
       throw new Error(`Error getting dashboard ${error}`);
     }

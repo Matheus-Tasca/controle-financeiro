@@ -54,10 +54,7 @@ export class TransactionRepository {
     return this.transactionRepository.delete({ id, userId });
   }
 
-  async getDashboardExpenses(userId) {
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - 30);
-    const endDate = new Date();
+  async getDashboardExpenses(userId, startDate, endDate) {
 
     const result = await this.transactionRepository
       .createQueryBuilder('transaction')
@@ -73,13 +70,10 @@ export class TransactionRepository {
       })
       .getRawOne();
 
-    return result.value || 0;
+    return Number(result?.value) || 0;
   }
 
-  async getDashboardIncomes(userId) {
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - 30);
-    const endDate = new Date();
+  async getDashboardIncomes(userId, startDate, endDate) {
 
     const result = await this.transactionRepository
       .createQueryBuilder('transaction')
@@ -95,13 +89,11 @@ export class TransactionRepository {
       })
       .getRawOne();
 
-    return result.value || 0;
+    return Number(result?.value) || 0;
   }
 
-  async getTopCategories(userId) {
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - 30);
-    const endDate = new Date();
+  async getTopCategories(userId, startDate, endDate) {
+
     return this.transactionRepository
       .createQueryBuilder('transaction')
       .innerJoin('transaction.installment', 'installment')

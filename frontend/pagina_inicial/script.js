@@ -1,6 +1,10 @@
+let currentYear = new Date().getFullYear();
+let currentMonth = new Date().getMonth(); // 0 a 11
+
 document.addEventListener('DOMContentLoaded', () => {
   initMobileMenu();
-  fetchDashboardData();
+  initMonthNavigation();
+  loadDashboardData();
 });
 
 function initMobileMenu() {
@@ -19,18 +23,83 @@ function initMobileMenu() {
   }
 }
 
-async function fetchDashboardData() {
-  const API_URL = window.API_BASE_URL;
+function initMonthNavigation() {
+  const prevBtn = document.getElementById('prev-month-btn');
+  const nextBtn = document.getElementById('next-month-btn');
 
-  const API_ROUTE_SUMMARY = `${API_URL}/financial/dashboard`;
-  const API_ROUTE_TOP_CATEGORIES = `${API_URL}/financial/dashboard/top-categories`;
+  if (prevBtn) {
+    prevBtn.addEventListener('click', () => {
+      changeMonth(-1);
+    });
+  }
+
+  if (nextBtn) {
+    nextBtn.addEventListener('click', () => {
+      changeMonth(1);
+    });
+  }
+}
+
+function changeMonth(delta) {
+  currentMonth += delta;
+  if (currentMonth < 0) {
+    currentMonth = 11;
+    currentYear -= 1;
+  } else if (currentMonth > 11) {
+    currentMonth = 0;
+    currentYear += 1;
+  }
+  loadDashboardData();
+}
+
+function getMonthDateRange(year, month) {
+  const pad = (n) => String(n).padStart(2, '0');
+  const startDate = `${year}-${pad(month + 1)}-01`;
+  const lastDay = new Date(year, month + 1, 0).getDate();
+  const endDate = `${year}-${pad(month + 1)}-${pad(lastDay)}`;
+  return { startDate, endDate, lastDay };
+}
+
+function updateMonthHeader(year, month, lastDay) {
+  const titleEl = document.getElementById('current-month-title');
+  const periodEl = document.getElementById('current-period-dates');
+
+  const date = new Date(year, month, 1);
+  const monthName = date.toLocaleDateString('pt-BR', { month: 'long' });
+  const capitalized = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+
+  if (titleEl) {
+    titleEl.textContent = `${capitalized} de ${year}`;
+  }
+
+  if (periodEl) {
+    const pad = (n) => String(n).padStart(2, '0');
+    periodEl.textContent = `01/${pad(month + 1)}/${year} a ${pad(lastDay)}/${pad(month + 1)}/${year}`;
+  }
+}
+
+async function loadDashboardData() {
+  const { startDate, endDate, lastDay } = getMonthDateRange(
+    currentYear,
+    currentMonth
+  );
+  updateMonthHeader(currentYear, currentMonth, lastDay);
+
+  const API_URL = window.API_BASE_URL;
+  const API_ROUTE_SUMMARY = `${API_URL}/financial/dashboard?startDate=${startDate}&endDate=${endDate}`;
+  const API_ROUTE_TOP_CATEGORIES = `${API_URL}/financial/dashboard/top-categories?startDate=${startDate}&endDate=${endDate}`;
 
   try {
-    const responseSummary = await fetch(API_ROUTE_SUMMARY);
-    const dataSummary = await responseSummary.json();
-    console.log(dataSummary);
+    const [responseSummary, responseCategories] = await Promise.all([
+      fetch(API_ROUTE_SUMMARY),
+      fetch(API_ROUTE_TOP_CATEGORIES),
+    ]);
 
-    const responseCategories = await fetch(API_ROUTE_TOP_CATEGORIES);
+    if (!responseSummary.ok || !responseCategories.ok) {
+      throw new Error('Falha ao obter os dados do painel');
+    }
+
+    const dataSummary = await responseSummary.json();
     const dataCategories = await responseCategories.json();
 
     updateSummaryCards(dataSummary);
@@ -41,12 +110,12 @@ async function fetchDashboardData() {
     const tbody = document.getElementById('categories-table-body');
     if (tbody) {
       tbody.innerHTML = `
-                <tr>
-                    <td colspan="2" class="py-6 text-center text-red-500 border-t border-gray-700">
-                        Ocorreu um erro ao buscar os dados. Tente novamente mais tarde.
-                    </td>
-                </tr>
-            `;
+        <tr>
+          <td colspan="2" class="py-6 text-center text-red-500 border-t border-gray-700">
+            Ocorreu um erro ao buscar os dados. Tente novamente mais tarde.
+          </td>
+        </tr>
+      `;
     }
   }
 }
@@ -56,20 +125,26 @@ function updateSummaryCards(data) {
   const totalExpensesEl = document.getElementById('total-expenses');
   const totalBalanceEl = document.getElementById('total-balance');
 
-  if (totalIncomesEl) totalIncomesEl.textContent = formatBRL(data.incomes);
-  if (totalExpensesEl) totalExpensesEl.textContent = formatBRL(data.expenses);
+  const incomes = Number(data?.incomes || 0);
+  const expenses = Number(data?.expenses || 0);
+  const balance = incomes - expenses;
+
+  if (totalIncomesEl) totalIncomesEl.textContent = formatBRL(incomes);
+  if (totalExpensesEl) totalExpensesEl.textContent = formatBRL(expenses);
 
   if (totalBalanceEl) {
-    const balance = data.incomes - data.expenses;
     totalBalanceEl.textContent = formatBRL(balance);
 
+    totalBalanceEl.classList.remove(
+      'text-white',
+      'text-red-400',
+      'text-green-400'
+    );
     if (balance < 0) {
-      totalBalanceEl.classList.remove('text-white');
       totalBalanceEl.classList.add('text-red-400');
-      return;
+    } else {
+      totalBalanceEl.classList.add('text-green-400');
     }
-    totalBalanceEl.classList.remove('text-white');
-    totalBalanceEl.classList.add('text-green-400');
   }
 }
 
@@ -79,12 +154,12 @@ function updateCategoriesTable(categories) {
 
   if (!categories || categories.length === 0) {
     tbody.innerHTML = `
-            <tr>
-                <td colspan="2" class="py-6 text-center text-gray-500 border-t border-gray-700">
-                    Nenhum gasto registrado nos últimos 30 dias.
-                </td>
-        </tr>
-            `;
+      <tr>
+        <td colspan="2" class="py-6 text-center text-gray-500 border-t border-gray-700">
+          Nenhum gasto registrado no mês selecionado.
+        </td>
+      </tr>
+    `;
     return;
   }
 

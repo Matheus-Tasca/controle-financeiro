@@ -99,10 +99,26 @@ export class TransactionController {
 
   async getDashboard(req, res) {
     try {
+      const { startDate, endDate } = req.query;
+      if (!startDate ||!endDate) {
+        return res.status(400).json({
+          error: 'startDate and endDate must be in YYYY-MM-DD format',
+        });
+      }
+      if (startDate > endDate) {
+        return res
+          .status(400)
+          .json({ error: 'startDate must be before or equal to endDate' });
+      }
+
       const transactionRepository = new TransactionRepository();
       const useCase = new GetDashboardUseCase(transactionRepository);
 
-      const data = await useCase.execute(req.userId);
+      const data = await useCase.execute({
+        userId: req.userId,
+        startDate,
+        endDate,
+      });
 
       return res.status(200).json({ ...data });
     } catch (error) {
@@ -112,9 +128,32 @@ export class TransactionController {
 
   async getTopCategories(req, res) {
     try {
+      const { startDate, endDate } = req.query;
+      if (startDate || endDate) {
+        if (
+          !startDate ||
+          !endDate ||
+          !/^\d{4}-\d{2}-\d{2}$/.test(startDate) ||
+          !/^\d{4}-\d{2}-\d{2}$/.test(endDate)
+        ) {
+          return res.status(400).json({
+            error: 'startDate and endDate must be in YYYY-MM-DD format',
+          });
+        }
+        if (startDate > endDate) {
+          return res
+            .status(400)
+            .json({ error: 'startDate must be before or equal to endDate' });
+        }
+      }
+
       const repository = new TransactionRepository();
       const useCase = new GetTopCategories(repository);
-      const data = await useCase.execute(req.userId);
+      const data = await useCase.execute({
+        userId: req.userId,
+        startDate,
+        endDate,
+      });
       return res.status(200).json(data);
     } catch (error) {
       return sendInternalError(req, res, error, 'dashboard.topCategories');

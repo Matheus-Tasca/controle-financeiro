@@ -8,7 +8,7 @@ export class InitialFinancialSchema20261009000000 {
         usuario VARCHAR(100) NOT NULL,
         senha_hash VARCHAR(255) NOT NULL,
         PRIMARY KEY (id),
-        UNIQUE KEY uq_usuarios_usuario (usuario),
+        UNIQUE KEY uq_usuarios_usuario (usuario)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
 

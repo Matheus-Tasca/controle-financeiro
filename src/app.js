@@ -4,8 +4,6 @@ import authRouter from './domains/auth/infra/auth.routes.js';
 import cors from 'cors';
 import helmet from 'helmet';
 import { randomUUID } from 'node:crypto';
-import swaggerUi from 'swagger-ui-express';
-import openapi from './docs/openapi.js';
 import { sendInternalError } from './shared/infra/http/errors.js';
 
 const corsOptions = {
@@ -48,7 +46,6 @@ class App {
       '/api-docs',
       helmet.contentSecurityPolicy({ reportOnly: true })
     );
-    this.server.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openapi));
     this.server.use('/auth', authRouter);
     this.server.use('/financial', financialRouter);
     this.server.use((error, req, res, next) => {

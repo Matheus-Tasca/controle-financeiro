@@ -13,6 +13,7 @@ test('monta resumo, saldo e despesas diárias em centavos', async () => {
       amount: '10000',
       installmentNumber: '1',
       totalInstallments: '1',
+      categoryName: 'Salário',
     },
     {
       transactionId: 't2',
@@ -23,6 +24,7 @@ test('monta resumo, saldo e despesas diárias em centavos', async () => {
       amount: '2500',
       installmentNumber: '1',
       totalInstallments: '1',
+      categoryName: 'Mercado',
     },
     {
       transactionId: 't3',
@@ -59,6 +61,9 @@ test('monta resumo, saldo e despesas diárias em centavos', async () => {
     { date: '2026-01-04', amount: 3000 },
   ]);
   assert.equal(result.transactions[0].transactionDate, '2026-01-03');
+  assert.equal(result.transactions[0].categoryName, 'Salário');
+  assert.equal(result.transactions[1].categoryName, 'Mercado');
+  assert.equal(result.transactions[2].categoryName, null);
 });
 
 test('retorna totais zerados para extrato vazio', async () => {

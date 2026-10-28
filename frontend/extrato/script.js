@@ -182,7 +182,7 @@ async function loadStatement() {
   button.disabled = true;
   error.classList.add('hidden');
   document.getElementById('transactions-table-body').innerHTML =
-    '<tr><td colspan="6" class="py-8 text-center text-gray-500">Carregando extrato...</td></tr>';
+    '<tr><td colspan="7" class="py-8 text-center text-gray-500">Carregando extrato...</td></tr>';
 
   try {
     const query = new URLSearchParams({ startDate, endDate });
@@ -201,7 +201,7 @@ async function loadStatement() {
         : requestError.message
     );
     document.getElementById('transactions-table-body').innerHTML =
-      '<tr><td colspan="6" class="py-8 text-center text-red-400">Não foi possível carregar os lançamentos.</td></tr>';
+      '<tr><td colspan="7" class="py-8 text-center text-red-400">Não foi possível carregar os lançamentos.</td></tr>';
     document.getElementById('expenses-chart').innerHTML =
       '<p class="py-12 text-center text-gray-500">Gráfico indisponível.</p>';
   } finally {
@@ -327,7 +327,7 @@ function renderTransactions(transactions) {
     `${transactions.length} ${transactions.length === 1 ? 'lançamento' : 'lançamentos'}`;
   if (!transactions.length) {
     tbody.innerHTML =
-      '<tr><td colspan="6" class="py-8 text-center text-gray-500">Nenhum lançamento com vencimento neste período.</td></tr>';
+      '<tr><td colspan="7" class="py-8 text-center text-gray-500">Nenhum lançamento com vencimento neste período.</td></tr>';
     return;
   }
 
@@ -346,9 +346,13 @@ function renderTransactions(transactions) {
       const cardLabel = transaction.cardName
         ? `<span class="block text-gray-200">${escapeHTML(transaction.cardName)}</span>${installment}`
         : '<span class="text-gray-500">—</span>';
+      const categoryLabel = transaction.categoryName
+        ? `<span class="text-gray-300">${escapeHTML(transaction.categoryName)}</span>`
+        : '<span class="text-gray-500">—</span>';
       return `<tr>
       <td class="px-4 py-4 text-gray-300 whitespace-nowrap">${escapeHTML(displayDate(transaction.dueDate))}</td>
       <td class="px-4 py-4 text-gray-200">${escapeHTML(transaction.description || 'Sem descrição')}</td>
+      <td class="px-4 py-4">${categoryLabel}</td>
       <td class="px-4 py-4 text-center"><span class="inline-flex px-2.5 py-1 rounded-full text-xs ${typeClass}">${typeLabel}</span></td>
       <td class="px-4 py-4 text-right font-medium whitespace-nowrap ${amountClass}">${escapeHTML(formatBRL(transaction.amount))}</td>
       <td class="px-4 py-4">${cardLabel}</td>

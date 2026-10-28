@@ -5,77 +5,185 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Controle Financeiro - Extrato</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="style.css" />
   </head>
-  <body data-page="extrato" class="bg-gray-900 text-gray-100 font-sans antialiased h-screen flex overflow-hidden">
-    <aside class="w-64 bg-gray-800 border-r border-gray-700 hidden md:flex flex-col">
-      <div class="p-8 pb-4"><h2 class="text-2xl font-bold text-green-400">FinanceApp</h2></div>
+  <body
+    data-page="extrato"
+    class="bg-gray-900 text-gray-100 font-sans antialiased h-screen flex overflow-hidden"
+  >
+    <aside
+      class="w-64 bg-gray-800 border-r border-gray-700 hidden md:flex flex-col"
+    >
+      <div class="p-8 pb-4">
+        <h2 class="text-2xl font-bold text-green-400">FinanceApp</h2>
+      </div>
       <div id="navbar-placeholder"></div>
     </aside>
 
-    <div class="md:hidden absolute top-0 left-0 w-full bg-gray-800 p-4 border-b border-gray-700 flex justify-between items-center z-10">
+    <div
+      class="md:hidden absolute top-0 left-0 w-full bg-gray-800 p-4 border-b border-gray-700 flex justify-between items-center z-10"
+    >
       <h2 class="text-xl font-bold text-green-400">FinanceApp</h2>
-      <button id="mobile-menu-btn" class="text-gray-300 hover:text-white" aria-label="Abrir menu">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+      <button
+        id="mobile-menu-btn"
+        class="text-gray-300 hover:text-white"
+        aria-label="Abrir menu"
+      >
+        <svg
+          class="w-6 h-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M4 6h16M4 12h16M4 18h16"
+          ></path>
+        </svg>
       </button>
     </div>
 
     <main class="flex-1 h-full relative pt-16 md:pt-0 overflow-y-auto">
       <div class="p-5 md:p-10 max-w-7xl mx-auto w-full">
-        <header class="mb-8 text-center"><h1 class="text-2xl md:text-3xl font-medium">Extrato</h1></header>
+        <header class="mb-8 text-center">
+          <h1 class="text-2xl md:text-3xl font-medium">Extrato</h1>
+        </header>
 
-        <section class="border border-gray-700 rounded-lg bg-gray-900 p-4 md:p-6 mb-8" aria-labelledby="period-title">
-          <h2 id="period-title" class="text-center text-gray-200 mb-4">Período do extrato</h2>
-          <form id="period-form" class="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-4 items-end">
-            <div><label for="start-date" class="block text-sm text-gray-300 mb-1">De</label><input id="start-date" type="date" lang="pt-BR" required class="date-input" /></div>
-            <div><label for="end-date" class="block text-sm text-gray-300 mb-1">Até</label><input id="end-date" type="date" lang="pt-BR" required class="date-input" /></div>
-            <button id="filter-button" type="submit" class="px-6 py-2.5 bg-green-500 hover:bg-green-600 text-gray-900 text-sm font-semibold rounded-lg transition disabled:opacity-50">Aplicar período</button>
+        <section
+          class="border border-gray-700 rounded-lg bg-gray-900 p-4 md:p-6 mb-8"
+          aria-labelledby="period-title"
+        >
+          <h2 id="period-title" class="text-center text-gray-200 mb-4">
+            Período do extrato
+          </h2>
+          <form
+            id="period-form"
+            class="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-4 items-end"
+          >
+            <div>
+              <label for="start-date" class="block text-sm text-gray-300 mb-1"
+                >De</label
+              ><input
+                id="start-date"
+                type="date"
+                lang="pt-BR"
+                required
+                class="date-input"
+              />
+            </div>
+            <div>
+              <label for="end-date" class="block text-sm text-gray-300 mb-1"
+                >Até</label
+              ><input
+                id="end-date"
+                type="date"
+                lang="pt-BR"
+                required
+                class="date-input"
+              />
+            </div>
+            <button
+              id="filter-button"
+              type="submit"
+              class="px-6 py-2.5 bg-green-500 hover:bg-green-600 text-gray-900 text-sm font-semibold rounded-lg transition disabled:opacity-50"
+            >
+              Aplicar período
+            </button>
           </form>
         </section>
 
-        <p id="statement-error" class="mb-6 text-sm text-red-400 hidden" role="alert"></p>
+        <p
+          id="statement-error"
+          class="mb-6 text-sm text-red-400 hidden"
+          role="alert"
+        ></p>
 
-        <section class="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 mb-10" aria-label="Resumo do período">
+        <section
+          class="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 mb-10"
+          aria-label="Resumo do período"
+        >
           <article class="summary-card border-green-700/70">
             <h2 class="text-sm text-gray-300 mb-2">Total de entradas</h2>
-            <p id="total-incomes" class="text-2xl font-semibold text-green-400">R$ 0,00</p>
+            <p id="total-incomes" class="text-2xl font-semibold text-green-400">
+              R$ 0,00
+            </p>
           </article>
           <article class="summary-card border-red-700/70">
             <h2 class="text-sm text-gray-300 mb-2">Total de saídas</h2>
-            <p id="total-expenses" class="text-2xl font-semibold text-red-400">R$ 0,00</p>
+            <p id="total-expenses" class="text-2xl font-semibold text-red-400">
+              R$ 0,00
+            </p>
           </article>
           <article class="summary-card border-gray-700">
             <h2 class="text-sm text-gray-300 mb-2">Saldo do período</h2>
-            <p id="period-balance" class="text-2xl font-semibold text-gray-100">R$ 0,00</p>
+            <p id="period-balance" class="text-2xl font-semibold text-gray-100">
+              R$ 0,00
+            </p>
           </article>
         </section>
 
-        <section class="border border-gray-700 rounded-lg bg-gray-900 p-4 md:p-6 mb-10" aria-labelledby="chart-title">
+        <section
+          class="border border-gray-700 rounded-lg bg-gray-900 p-4 md:p-6 mb-10"
+          aria-labelledby="chart-title"
+        >
           <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
-            <h2 id="chart-title" class="text-lg font-medium text-gray-200">Gráfico de débitos</h2>
+            <h2 id="chart-title" class="text-lg font-medium text-gray-200">
+              Gráfico de débitos
+            </h2>
             <p id="chart-grouping" class="text-xs text-gray-500"></p>
           </div>
-          <div id="expenses-chart" class="chart-scroll" aria-label="Débitos no período"></div>
+          <div
+            id="expenses-chart"
+            class="relative w-full h-64 md:h-72"
+            aria-label="Débitos no período"
+          >
+            <canvas id="expenses-chart-canvas"></canvas>
+            <div
+              id="expenses-chart-empty"
+              class="hidden absolute inset-0 flex items-center justify-center text-sm text-gray-500"
+            ></div>
+          </div>
         </section>
 
-        <section class="border border-gray-700 rounded-lg bg-gray-900 p-2 md:p-6 overflow-hidden" aria-labelledby="transactions-title">
-          <div class="flex flex-wrap items-center justify-between gap-3 px-3 mt-3 mb-5">
-            <h2 id="transactions-title" class="text-lg font-medium text-gray-200">Lançamentos</h2>
+        <section
+          class="border border-gray-700 rounded-lg bg-gray-900 p-2 md:p-6 overflow-hidden"
+          aria-labelledby="transactions-title"
+        >
+          <div
+            class="flex flex-wrap items-center justify-between gap-3 px-3 mt-3 mb-5"
+          >
+            <h2
+              id="transactions-title"
+              class="text-lg font-medium text-gray-200"
+            >
+              Lançamentos
+            </h2>
             <p id="transactions-count" class="text-sm text-gray-500"></p>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse min-w-[840px]">
-              <thead><tr class="text-gray-300 text-sm tracking-wide border-y border-gray-700">
-                <th class="px-4 py-3 font-medium">Vencimento</th>
-                <th class="px-4 py-3 font-medium">Descrição</th>
-                <th class="px-4 py-3 font-medium">Categoria</th>
-                <th class="px-4 py-3 font-medium text-center">Tipo</th>
-                <th class="px-4 py-3 font-medium text-right">Valor</th>
-                <th class="px-4 py-3 font-medium">Cartão / parcela</th>
-                <th class="px-4 py-3 font-medium text-center">Ações</th>
-              </tr></thead>
+              <thead>
+                <tr
+                  class="text-gray-300 text-sm tracking-wide border-y border-gray-700"
+                >
+                  <th class="px-4 py-3 font-medium">Vencimento</th>
+                  <th class="px-4 py-3 font-medium">Descrição</th>
+                  <th class="px-4 py-3 font-medium">Categoria</th>
+                  <th class="px-4 py-3 font-medium text-center">Tipo</th>
+                  <th class="px-4 py-3 font-medium text-right">Valor</th>
+                  <th class="px-4 py-3 font-medium">Cartão / parcela</th>
+                  <th class="px-4 py-3 font-medium text-center">Ações</th>
+                </tr>
+              </thead>
               <tbody id="transactions-table-body">
-                <tr><td colspan="7" class="py-8 text-center text-gray-500">Carregando extrato...</td></tr>
+                <tr>
+                  <td colspan="7" class="py-8 text-center text-gray-500">
+                    Carregando extrato...
+                  </td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -97,7 +205,10 @@
         <div
           class="px-6 py-4 border-b border-gray-800 flex justify-between items-center bg-gray-800/40"
         >
-          <h3 id="edit-transaction-title" class="text-lg font-semibold text-gray-100">
+          <h3
+            id="edit-transaction-title"
+            class="text-lg font-semibold text-gray-100"
+          >
             Editar transação
           </h3>
           <button
@@ -106,8 +217,18 @@
             class="text-gray-400 hover:text-white p-1.5 rounded-lg hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-600 transition-colors"
             aria-label="Fechar modal"
           >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            <svg
+              class="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              ></path>
             </svg>
           </button>
         </div>
@@ -115,7 +236,10 @@
         <form id="edit-transaction-form" novalidate>
           <div class="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
             <div>
-              <label for="edit-description" class="block text-sm text-gray-300 mb-1">
+              <label
+                for="edit-description"
+                class="block text-sm text-gray-300 mb-1"
+              >
                 Descrição <span class="text-gray-500">(opcional)</span>
               </label>
               <input
@@ -130,7 +254,10 @@
 
             <div class="grid grid-cols-2 gap-4">
               <div>
-                <label for="edit-transaction-type" class="block text-sm text-gray-300 mb-1">
+                <label
+                  for="edit-transaction-type"
+                  class="block text-sm text-gray-300 mb-1"
+                >
                   Tipo
                 </label>
                 <select
@@ -163,7 +290,10 @@
                 Valor
               </label>
               <div class="relative">
-                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">R$</span>
+                <span
+                  class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"
+                  >R$</span
+                >
                 <input
                   id="edit-amount"
                   name="amount"
@@ -179,7 +309,10 @@
             </div>
 
             <div>
-              <label for="edit-category-id" class="block text-sm text-gray-300 mb-1">
+              <label
+                for="edit-category-id"
+                class="block text-sm text-gray-300 mb-1"
+              >
                 Categoria
               </label>
               <select
@@ -193,7 +326,10 @@
             </div>
 
             <div>
-              <label for="edit-payment-method-id" class="block text-sm text-gray-300 mb-1">
+              <label
+                for="edit-payment-method-id"
+                class="block text-sm text-gray-300 mb-1"
+              >
                 Forma de pagamento
               </label>
               <select
@@ -207,7 +343,10 @@
             </div>
 
             <div id="edit-card-field" class="hidden">
-              <label for="edit-card-id" class="block text-sm text-gray-300 mb-1">
+              <label
+                for="edit-card-id"
+                class="block text-sm text-gray-300 mb-1"
+              >
                 Cartão
               </label>
               <select
@@ -219,10 +358,16 @@
               </select>
             </div>
 
-            <p id="edit-transaction-error" class="text-sm text-red-400 hidden" role="alert"></p>
+            <p
+              id="edit-transaction-error"
+              class="text-sm text-red-400 hidden"
+              role="alert"
+            ></p>
           </div>
 
-          <div class="px-6 py-3 border-t border-gray-800 flex justify-end gap-3 bg-gray-900/60">
+          <div
+            class="px-6 py-3 border-t border-gray-800 flex justify-end gap-3 bg-gray-900/60"
+          >
             <button
               type="button"
               data-close-modal
@@ -256,7 +401,10 @@
         <div
           class="px-6 py-4 border-b border-gray-800 flex justify-between items-center bg-gray-800/40"
         >
-          <h3 id="delete-transaction-title" class="text-lg font-semibold text-gray-100">
+          <h3
+            id="delete-transaction-title"
+            class="text-lg font-semibold text-gray-100"
+          >
             Remover transação
           </h3>
           <button
@@ -265,29 +413,50 @@
             class="text-gray-400 hover:text-white p-1.5 rounded-lg hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-600 transition-colors"
             aria-label="Fechar modal"
           >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            <svg
+              class="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              ></path>
             </svg>
           </button>
         </div>
 
         <div class="p-6 space-y-4">
           <p class="text-gray-300">
-            Tem certeza de que deseja remover a transação <strong id="delete-transaction-desc" class="text-white"></strong>?
+            Tem certeza de que deseja remover a transação
+            <strong id="delete-transaction-desc" class="text-white"></strong>?
           </p>
           <p
             id="delete-installments-warning"
             class="text-sm text-yellow-300 bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 hidden"
           >
-            Esta transação possui <strong id="delete-installments-count"></strong> parcelas. Ao remover a transação, todos os registros de parcelas ligados a ela serão removidos permanentemente.
+            Esta transação possui
+            <strong id="delete-installments-count"></strong> parcelas. Ao
+            remover a transação, todos os registros de parcelas ligados a ela
+            serão removidos permanentemente.
           </p>
           <p id="delete-single-warning" class="text-sm text-gray-400">
-            Ao remover a transação, todos os registros de parcelas ligados a ela serão removidos permanentemente.
+            Ao remover a transação, todos os registros de parcelas ligados a ela
+            serão removidos permanentemente.
           </p>
-          <p id="delete-transaction-error" class="text-sm text-red-400 hidden" role="alert"></p>
+          <p
+            id="delete-transaction-error"
+            class="text-sm text-red-400 hidden"
+            role="alert"
+          ></p>
         </div>
 
-        <div class="px-6 py-3 border-t border-gray-800 flex justify-end gap-3 bg-gray-900/60">
+        <div
+          class="px-6 py-3 border-t border-gray-800 flex justify-end gap-3 bg-gray-900/60"
+        >
           <button
             type="button"
             data-close-modal

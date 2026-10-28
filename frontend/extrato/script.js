@@ -7,6 +7,7 @@ const CARDS_API = `${window.API_BASE_URL}/financial/cards?activeOnly=true`;
 let currentTransactions = [];
 let editingTransaction = null;
 let deletingTransaction = null;
+let expensesChartInstance = null;
 
 let categoriesCache = null;
 let paymentMethodsCache = null;
@@ -127,9 +128,11 @@ function closeModal(modal) {
 
 function initModals() {
   document.querySelectorAll('.modal').forEach((modal) => {
-    modal.querySelectorAll('[data-close-modal]').forEach((button) =>
-      button.addEventListener('click', () => closeModal(modal))
-    );
+    modal
+      .querySelectorAll('[data-close-modal]')
+      .forEach((button) =>
+        button.addEventListener('click', () => closeModal(modal))
+      );
     modal.addEventListener('click', (event) => {
       if (event.target === modal) closeModal(modal);
     });
@@ -153,8 +156,12 @@ async function fetchOptionsData() {
   };
 
   const [categories, paymentMethods, cards] = await Promise.all([
-    categoriesCache ? Promise.resolve(categoriesCache) : fetchSafe(CATEGORIES_API),
-    paymentMethodsCache ? Promise.resolve(paymentMethodsCache) : fetchSafe(PAYMENT_METHODS_API),
+    categoriesCache
+      ? Promise.resolve(categoriesCache)
+      : fetchSafe(CATEGORIES_API),
+    paymentMethodsCache
+      ? Promise.resolve(paymentMethodsCache)
+      : fetchSafe(PAYMENT_METHODS_API),
     cardsCache ? Promise.resolve(cardsCache) : fetchSafe(CARDS_API),
   ]);
 
@@ -202,8 +209,14 @@ async function loadStatement() {
     );
     document.getElementById('transactions-table-body').innerHTML =
       '<tr><td colspan="7" class="py-8 text-center text-red-400">Não foi possível carregar os lançamentos.</td></tr>';
-    document.getElementById('expenses-chart').innerHTML =
-      '<p class="py-12 text-center text-gray-500">Gráfico indisponível.</p>';
+    destroyExpensesChart();
+    const canvas = document.getElementById('expenses-chart-canvas');
+    const emptyNotice = document.getElementById('expenses-chart-empty');
+    if (canvas) canvas.classList.add('hidden');
+    if (emptyNotice) {
+      emptyNotice.textContent = 'Gráfico indisponível.';
+      emptyNotice.classList.remove('hidden');
+    }
   } finally {
     button.disabled = false;
   }
@@ -289,8 +302,16 @@ function chartBuckets(dailyExpenses, startDate, endDate) {
   return { grouping, buckets: [...buckets.values()] };
 }
 
+function destroyExpensesChart() {
+  if (expensesChartInstance) {
+    expensesChartInstance.destroy();
+    expensesChartInstance = null;
+  }
+}
+
 function renderChart(dailyExpenses, startDate, endDate) {
-  const chart = document.getElementById('expenses-chart');
+  const canvas = document.getElementById('expenses-chart-canvas');
+  const emptyNotice = document.getElementById('expenses-chart-empty');
   const { grouping, buckets } = chartBuckets(dailyExpenses, startDate, endDate);
   const groupingLabels = {
     day: 'Por dia',
@@ -299,25 +320,81 @@ function renderChart(dailyExpenses, startDate, endDate) {
   };
   document.getElementById('chart-grouping').textContent =
     groupingLabels[grouping];
+
   const max = Math.max(...buckets.map((item) => item.amount), 0);
   if (max === 0) {
-    chart.innerHTML =
-      '<p class="py-12 text-center text-gray-500">Nenhuma saída no período selecionado.</p>';
+    destroyExpensesChart();
+    if (canvas) canvas.classList.add('hidden');
+    if (emptyNotice) {
+      emptyNotice.textContent = 'Nenhuma saída no período selecionado.';
+      emptyNotice.classList.remove('hidden');
+    }
     return;
   }
 
-  chart.innerHTML = `<div class="chart-bars">${buckets
-    .map((bucket) => {
-      const height = bucket.amount
-        ? Math.max(4, (bucket.amount / max) * 100)
-        : 0;
-      return `<div class="chart-item" title="${escapeHTML(bucket.label)}: ${escapeHTML(formatBRL(bucket.amount))}">
-      <span class="chart-value">${bucket.amount ? escapeHTML(formatBRL(bucket.amount)) : ''}</span>
-      <div class="chart-bar-track"><div class="chart-bar" style="height: ${height}%"></div></div>
-      <span class="chart-label">${escapeHTML(bucket.label)}</span>
-    </div>`;
-    })
-    .join('')}</div>`;
+  if (emptyNotice) emptyNotice.classList.add('hidden');
+  if (canvas) canvas.classList.remove('hidden');
+
+  destroyExpensesChart();
+
+  const labels = buckets.map((bucket) => bucket.label);
+  const data = buckets.map((bucket) => (Number(bucket.amount) || 0) / 100);
+
+  const ctx = canvas.getContext('2d');
+  expensesChartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Débitos (R$)',
+          data,
+          backgroundColor: 'rgba(248, 113, 113, 0.75)',
+          borderColor: '#ef4444',
+          borderWidth: 1,
+          borderRadius: 4,
+          hoverBackgroundColor: '#ef4444',
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1f2937',
+          titleColor: '#e5e7eb',
+          bodyColor: '#f87171',
+          borderColor: '#374151',
+          borderWidth: 1,
+          padding: 10,
+          callbacks: {
+            label(context) {
+              const val = context.parsed.y * 100;
+              return ` Saída: ${formatBRL(val)}`;
+            },
+          },
+        },
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(55, 65, 81, 0.3)' },
+          ticks: { color: '#9ca3af', font: { size: 11 } },
+        },
+        y: {
+          grid: { color: 'rgba(55, 65, 81, 0.3)' },
+          ticks: {
+            color: '#9ca3af',
+            font: { size: 11 },
+            callback(val) {
+              return `R$ ${val.toLocaleString('pt-BR')}`;
+            },
+          },
+        },
+      },
+    },
+  });
 }
 
 function renderTransactions(transactions) {
@@ -457,7 +534,8 @@ async function openEditTransactionModal(transaction) {
 
   // Populate payment methods
   const pmSelect = document.getElementById('edit-payment-method-id');
-  const isIncome = document.getElementById('edit-transaction-type').value === 'entrada';
+  const isIncome =
+    document.getElementById('edit-transaction-type').value === 'entrada';
   const availableMethods = isIncome
     ? paymentMethods.filter((method) => {
         const name = normalize(method.name);
@@ -546,18 +624,25 @@ function initEditForm() {
     errorEl.textContent = '';
     errorEl.classList.add('hidden');
 
-    const description = document.getElementById('edit-description').value.trim();
-    const transactionType = document.getElementById('edit-transaction-type').value;
+    const description = document
+      .getElementById('edit-description')
+      .value.trim();
+    const transactionType = document.getElementById(
+      'edit-transaction-type'
+    ).value;
     const date = document.getElementById('edit-date').value;
     const categoryId = document.getElementById('edit-category-id').value;
-    const paymentMethodId = document.getElementById('edit-payment-method-id').value;
+    const paymentMethodId = document.getElementById(
+      'edit-payment-method-id'
+    ).value;
     const cardSelect = document.getElementById('edit-card-id');
     const pm = paymentMethodsCache?.find((m) => m.id === paymentMethodId);
     const isCredit = isCreditCardMethod(pm);
     const cardId = isCredit ? cardSelect.value : null;
 
     if (!categoryId || !paymentMethodId || !date) {
-      errorEl.textContent = 'Preencha tipo, data, categoria e forma de pagamento.';
+      errorEl.textContent =
+        'Preencha tipo, data, categoria e forma de pagamento.';
       errorEl.classList.remove('hidden');
       return;
     }
@@ -601,7 +686,9 @@ function initEditForm() {
       const body = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        throw new Error(body.error || 'Não foi possível atualizar a transação.');
+        throw new Error(
+          body.error || 'Não foi possível atualizar a transação.'
+        );
       }
 
       closeModal(document.getElementById('edit-transaction-modal'));
@@ -624,8 +711,12 @@ function openDeleteTransactionModal(transaction) {
   deletingTransaction = transaction;
   const modal = document.getElementById('delete-transaction-modal');
   const descEl = document.getElementById('delete-transaction-desc');
-  const installmentsWarning = document.getElementById('delete-installments-warning');
-  const installmentsCount = document.getElementById('delete-installments-count');
+  const installmentsWarning = document.getElementById(
+    'delete-installments-warning'
+  );
+  const installmentsCount = document.getElementById(
+    'delete-installments-count'
+  );
   const singleWarning = document.getElementById('delete-single-warning');
   const errorEl = document.getElementById('delete-transaction-error');
 

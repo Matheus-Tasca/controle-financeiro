@@ -1,0 +1,49 @@
+.date-input,
+.text-input,
+.select-input {
+  width: 100%;
+  border: 1px solid rgb(55 65 81);
+  border-radius: 0.5rem;
+  background: rgb(31 41 55);
+  color: rgb(243 244 246);
+  padding: 0.625rem 0.75rem;
+}
+
+.date-input:focus-visible,
+.text-input:focus-visible,
+.select-input:focus-visible,
+button:focus-visible {
+  outline: 2px solid rgb(74 222 128);
+  outline-offset: 2px;
+}
+
+.summary-card {
+  min-width: 0;
+  border-width: 1px;
+  border-radius: 0.5rem;
+  background: rgb(17 24 39);
+  padding: 1.25rem;
+  text-align: center;
+}
+
+.person-card {
+  border: 1px solid rgb(55 65 81);
+  border-radius: 0.75rem;
+  background: rgb(31 41 55);
+  padding: 1.25rem;
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+.person-card:hover {
+  border-color: rgb(74 222 128);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+}
+
+.person-card.active-card {
+  border-color: rgb(74 222 128);
+  background: rgb(24 33 47);
+  box-shadow: 0 0 0 2px rgba(74, 222, 128, 0.4);
+}
+

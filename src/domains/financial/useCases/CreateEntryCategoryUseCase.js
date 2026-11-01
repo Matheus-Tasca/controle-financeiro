@@ -7,6 +7,7 @@ export class CreateEntryCategoryUseCase {
 
   /**
    * @param {Object} data
+   * @param {string} data.userId
    * @param {string} data.description
    * @param {boolean} [data.active]
    */
@@ -15,12 +16,10 @@ export class CreateEntryCategoryUseCase {
       throw new Error('Description is required');
     }
 
-    const categoryExists = await this.repository.findByDescription(
-      description,
-      userId
-    );
+    const categoryWithSameDescription =
+      await this.repository.findByDescription(description, userId);
 
-    if (categoryExists) {
+    if (categoryWithSameDescription) {
       throw new Error('Entry category already exists');
     }
 
@@ -33,7 +32,7 @@ export class CreateEntryCategoryUseCase {
     try {
       return await this.repository.save(newEntryCategory);
     } catch (error) {
-      throw new Error(`Failed to create entry category`, { cause: error });
+      throw new Error('Failed to create entry category', { cause: error });
     }
   }
 }

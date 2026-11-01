@@ -7,7 +7,9 @@ export class GetAllPaymentMethods {
     try {
       return await this.repository.getAllPaymentMethods(userId);
     } catch (error) {
-      throw new Error(`Error getting all payment methods ${error}`);
+      throw new Error(
+        `Error getting all payment methods: ${error.message || error}`
+      );
     }
   }
 }

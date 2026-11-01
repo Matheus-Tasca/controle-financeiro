@@ -1,60 +1,83 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 
-const encode = (value) =>
+const JWT_ALGORITHM = 'HS256';
+const JWT_TYPE = 'JWT';
+const ACCESS_TOKEN_EXPIRATION_SECONDS = 30 * 60; // 30 minutos
+const MIN_JWT_SECRET_LENGTH = 32;
+
+const encodeBase64Url = (value) =>
   Buffer.from(JSON.stringify(value)).toString('base64url');
 
 export function createAccessToken(userId) {
   const secret = process.env.JWT_SECRET;
-  if (!secret || secret.length < 32) {
+  if (!secret || secret.length < MIN_JWT_SECRET_LENGTH) {
     throw new Error('JWT_SECRET must contain at least 32 characters');
   }
-  const now = Math.floor(Date.now() / 1000);
-  const header = encode({ alg: 'HS256', typ: 'JWT' });
-  const payload = encode({ sub: userId, iat: now, exp: now + 30 * 60 });
-  const content = `${header}.${payload}`;
+
+  const currentTimestampSeconds = Math.floor(Date.now() / 1000);
+  const header = encodeBase64Url({ alg: JWT_ALGORITHM, typ: JWT_TYPE });
+  const payload = encodeBase64Url({
+    sub: userId,
+    iat: currentTimestampSeconds,
+    exp: currentTimestampSeconds + ACCESS_TOKEN_EXPIRATION_SECONDS,
+  });
+
+  const unsignedToken = `${header}.${payload}`;
   const signature = createHmac('sha256', secret)
-    .update(content)
+    .update(unsignedToken)
     .digest('base64url');
-  return `${content}.${signature}`;
+
+  return `${unsignedToken}.${signature}`;
 }
 
 export function verifyAccessToken(token) {
   const secret = process.env.JWT_SECRET;
-
-  if (!secret || secret.length < 32)
+  if (!secret || secret.length < MIN_JWT_SECRET_LENGTH) {
     throw new Error('JWT_SECRET is not configured');
+  }
 
-  const [header, payload, signature, extra] = String(token || '').split('.');
-
-  if (!header || !payload || !signature || extra) return null;
+  const [header, payload, signature, extraSegment] = String(token || '').split('.');
+  if (!header || !payload || !signature || extraSegment) {
+    return null;
+  }
 
   try {
     const parsedHeader = JSON.parse(
       Buffer.from(header, 'base64url').toString()
     );
-
-    if (parsedHeader.alg !== 'HS256' || parsedHeader.typ !== 'JWT') return null;
+    if (parsedHeader.alg !== JWT_ALGORITHM || parsedHeader.typ !== JWT_TYPE) {
+      return null;
+    }
   } catch {
     return null;
   }
 
-  const expected = createHmac('sha256', secret)
+  const expectedSignature = createHmac('sha256', secret)
     .update(`${header}.${payload}`)
     .digest();
 
-  const actual = Buffer.from(signature, 'base64url');
+  const actualSignature = Buffer.from(signature, 'base64url');
 
-  if (actual.length !== expected.length || !timingSafeEqual(actual, expected))
+  const isSignatureValid =
+    actualSignature.length === expectedSignature.length &&
+    timingSafeEqual(actualSignature, expectedSignature);
+
+  if (!isSignatureValid) {
     return null;
+  }
 
   try {
     const claims = JSON.parse(Buffer.from(payload, 'base64url').toString());
+    const currentTimestampSeconds = Math.floor(Date.now() / 1000);
+
     if (
       !claims.sub ||
       !claims.exp ||
-      claims.exp <= Math.floor(Date.now() / 1000)
-    )
+      claims.exp <= currentTimestampSeconds
+    ) {
       return null;
+    }
+
     return { userId: claims.sub };
   } catch {
     return null;

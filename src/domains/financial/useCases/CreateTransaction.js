@@ -5,8 +5,8 @@ import { calculateInstallmentDueDates } from '../utils/installmentDates.js';
 const PAYMENT_METHOD_CREDIT_CARD = 'cartao_credito';
 
 export class CreateTransactionUseCase {
-  constructor(transacitonRepository, cardRepository) {
-    this.transacitonRepository = transacitonRepository;
+  constructor(transactionRepository, cardRepository) {
+    this.transactionRepository = transactionRepository;
     this.cardRepository = cardRepository;
   }
 
@@ -29,22 +29,22 @@ export class CreateTransactionUseCase {
     ) {
       throw new Error('Transaction required data is missing');
     }
-    if (
-      !(await this.transacitonRepository.categoryBelongsToUser(
-        categoryId,
-        userId
-      ))
-    ) {
+
+    const categoryBelongsToUser =
+      await this.transactionRepository.categoryBelongsToUser(categoryId, userId);
+    if (!categoryBelongsToUser) {
       throw new Error('Entry category not found');
     }
-    if (
-      cardId &&
-      !(await this.transacitonRepository.cardBelongsToUser(cardId, userId))
-    ) {
-      throw new Error('Card not found');
+
+    if (cardId) {
+      const cardBelongsToUser =
+        await this.transactionRepository.cardBelongsToUser(cardId, userId);
+      if (!cardBelongsToUser) {
+        throw new Error('Card not found');
+      }
     }
 
-    const newTransaction = new Transaction({
+    const transaction = new Transaction({
       userId,
       description,
       categoryId,
@@ -55,7 +55,7 @@ export class CreateTransactionUseCase {
     });
 
     const installments = await this.generateInstallments({
-      transactionId: newTransaction.id,
+      transactionId: transaction.id,
       paymentMethodId,
       installmentData: installment,
       transactionDate: date,
@@ -64,13 +64,13 @@ export class CreateTransactionUseCase {
     });
 
     try {
-      return await this.transacitonRepository.createWithInstallments(
-        newTransaction,
+      return await this.transactionRepository.createWithInstallments(
+        transaction,
         installments
       );
     } catch (error) {
       throw new Error(
-        `Failed to create transaction and installments:  ${error}`
+        `Failed to create transaction and installments: ${error.message || error}`
       );
     }
   }
@@ -84,41 +84,52 @@ export class CreateTransactionUseCase {
     userId,
   }) {
     const isCreditCard = paymentMethodId === PAYMENT_METHOD_CREDIT_CARD;
-    const totalInstallments = isCreditCard
+    const totalInstallmentCount = isCreditCard
       ? installmentData.totalInstallments || 1
       : 1;
-    const totalAmount = installmentData.amount;
-    const baseValue = Math.floor(totalAmount / totalInstallments);
-    const cents = totalAmount % totalInstallments;
-    const installments = [];
+
+    const totalAmountInCents = installmentData.amount;
+    const baseInstallmentAmountInCents = Math.floor(
+      totalAmountInCents / totalInstallmentCount
+    );
+    const remainderCents = totalAmountInCents % totalInstallmentCount;
 
     if (isCreditCard) {
       const card = await this.cardRepository.findDateInformationByCardId(
         cardId,
         userId
       );
-      if (!card) throw new Error('Card not found');
+      if (!card) {
+        throw new Error('Card not found');
+      }
+
       const { closingDay, dueDay } = card;
       const dueDates = calculateInstallmentDueDates({
         transactionDate,
         closingDay,
         dueDay,
-        totalInstallments,
+        totalInstallments: totalInstallmentCount,
       });
 
+      const installments = [];
       for (
-        let currentInstallment = 1;
-        currentInstallment <= totalInstallments;
-        currentInstallment++
+        let currentInstallmentNumber = 1;
+        currentInstallmentNumber <= totalInstallmentCount;
+        currentInstallmentNumber++
       ) {
-        const firstInstallment = currentInstallment === 1;
+        const isFirstInstallment = currentInstallmentNumber === 1;
+        // O valor restante da divisão inteira de centavos é adicionado à primeira parcela
+        const installmentAmount = isFirstInstallment
+          ? baseInstallmentAmountInCents + remainderCents
+          : baseInstallmentAmountInCents;
+
         installments.push(
           new Installment({
             transactionId,
-            installmentNumber: currentInstallment,
-            totalInstallments,
-            amount: firstInstallment ? baseValue + cents : baseValue,
-            dueDate: dueDates[currentInstallment - 1],
+            installmentNumber: currentInstallmentNumber,
+            totalInstallments: totalInstallmentCount,
+            amount: installmentAmount,
+            dueDate: dueDates[currentInstallmentNumber - 1],
           })
         );
       }
@@ -126,16 +137,14 @@ export class CreateTransactionUseCase {
       return installments;
     }
 
-    installments.push(
+    return [
       new Installment({
         transactionId,
         installmentNumber: 1,
-        totalInstallments,
-        amount: baseValue,
+        totalInstallments: 1,
+        amount: totalAmountInCents,
         dueDate: transactionDate,
-      })
-    );
-
-    return installments;
+      }),
+    ];
   }
 }

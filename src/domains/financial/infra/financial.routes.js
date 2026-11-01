@@ -3,6 +3,8 @@ import { CardController } from './controllers/CardController.js';
 import { TransactionController } from './controllers/TransactionController.js';
 import { EntryCategoryController } from './controllers/EntryCategoryController.js';
 import { PaymentMethodController } from './controllers/PaymentMethodController.js';
+import { ThirdPartyController } from './controllers/ThirdPartyController.js';
+import { ThirdPartyDebtController } from './controllers/ThirdPartyDebtController.js';
 import { InvestmentController } from './controllers/InvestmentController.js';
 import { authenticationMiddleware } from '../../../shared/infra/auth/authenticationMiddleware.js';
 
@@ -12,6 +14,8 @@ const cardController = new CardController();
 const transactionController = new TransactionController();
 const entryCategoryController = new EntryCategoryController();
 const paymentMethodController = new PaymentMethodController();
+const thirdPartyController = new ThirdPartyController();
+const thirdPartyDebtController = new ThirdPartyDebtController();
 const investmentController = new InvestmentController();
 
 financialRouter.post('/cards', (req, res) =>
@@ -63,6 +67,32 @@ financialRouter.get('/entryCategory', (req, res) =>
   entryCategoryController.getAllEntryCategories(req, res)
 );
 
+// Terceiros (A Pagar e A Receber)
+financialRouter.get('/third-parties', (req, res) =>
+  thirdPartyController.getAllThirdParties(req, res)
+);
+financialRouter.post('/third-parties', (req, res) =>
+  thirdPartyController.createThirdParty(req, res)
+);
+financialRouter.put('/third-parties/:id', (req, res) =>
+  thirdPartyController.updateThirdParty(req, res)
+);
+financialRouter.delete('/third-parties/:id', (req, res) =>
+  thirdPartyController.deleteThirdParty(req, res)
+);
+
+// Lançamentos e Extrato de Terceiros
+financialRouter.post('/third-party-debts', (req, res) =>
+  thirdPartyDebtController.createDebt(req, res)
+);
+financialRouter.delete('/third-party-debts/:id', (req, res) =>
+  thirdPartyDebtController.deleteDebt(req, res)
+);
+financialRouter.patch('/third-party-debts/installments/:id/payment', (req, res) =>
+  thirdPartyDebtController.updateInstallmentPayment(req, res)
+);
+financialRouter.get('/third-party-debts/statement', (req, res) =>
+  thirdPartyDebtController.getStatement(req, res)
 // Rotas de Investimentos
 financialRouter.get('/investments/summary', (req, res) =>
   investmentController.getSummary(req, res)

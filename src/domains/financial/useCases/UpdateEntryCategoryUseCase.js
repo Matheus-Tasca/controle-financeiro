@@ -6,6 +6,7 @@ export class UpdateEntryCategoryUseCase {
   /**
    * @param {Object} data
    * @param {string} data.id
+   * @param {string} data.userId
    * @param {string} [data.description]
    * @param {boolean} [data.active]
    */
@@ -40,7 +41,7 @@ export class UpdateEntryCategoryUseCase {
     try {
       return await this.repository.save(category);
     } catch (error) {
-      throw new Error(`Failed to update entry category`, { cause: error });
+      throw new Error('Failed to update entry category', { cause: error });
     }
   }
 }

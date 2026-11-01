@@ -11,6 +11,28 @@ import {
   sendPublicError,
 } from '../../../../shared/infra/http/errors.js';
 
+const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+function validateDateRange({
+  startDate,
+  endDate,
+  formatErrorMessage = 'startDate and endDate must be in YYYY-MM-DD format',
+}) {
+  const isMissing = !startDate || !endDate;
+  const isInvalidFormat =
+    !ISO_DATE_PATTERN.test(startDate) || !ISO_DATE_PATTERN.test(endDate);
+
+  if (isMissing || isInvalidFormat) {
+    return { error: formatErrorMessage };
+  }
+
+  if (startDate > endDate) {
+    return { error: 'startDate must be before or equal to endDate' };
+  }
+
+  return null;
+}
+
 export class TransactionController {
   async createTransaction(req, res) {
     try {
@@ -101,15 +123,15 @@ export class TransactionController {
   async getDashboard(req, res) {
     try {
       const { startDate, endDate } = req.query;
-      if (!startDate || !endDate) {
-        return res.status(400).json({
-          error: 'startDate and endDate must be in YYYY-MM-DD format',
-        });
-      }
-      if (startDate > endDate) {
-        return res
-          .status(400)
-          .json({ error: 'startDate must be before or equal to endDate' });
+      const validationError = validateDateRange({
+        startDate,
+        endDate,
+        formatErrorMessage:
+          'startDate and endDate must be in YYYY-MM-DD format',
+      });
+
+      if (validationError) {
+        return res.status(400).json(validationError);
       }
 
       const transactionRepository = new TransactionRepository();
@@ -131,20 +153,15 @@ export class TransactionController {
     try {
       const { startDate, endDate } = req.query;
       if (startDate || endDate) {
-        if (
-          !startDate ||
-          !endDate ||
-          !/^\d{4}-\d{2}-\d{2}$/.test(startDate) ||
-          !/^\d{4}-\d{2}-\d{2}$/.test(endDate)
-        ) {
-          return res.status(400).json({
-            error: 'startDate and endDate must be in YYYY-MM-DD format',
-          });
-        }
-        if (startDate > endDate) {
-          return res
-            .status(400)
-            .json({ error: 'startDate must be before or equal to endDate' });
+        const validationError = validateDateRange({
+          startDate,
+          endDate,
+          formatErrorMessage:
+            'startDate and endDate must be in YYYY-MM-DD format',
+        });
+
+        if (validationError) {
+          return res.status(400).json(validationError);
         }
       }
 
@@ -164,21 +181,17 @@ export class TransactionController {
   async getStatement(req, res) {
     try {
       const { startDate, endDate } = req.query;
-      if (
-        !startDate ||
-        !endDate ||
-        !/^\d{4}-\d{2}-\d{2}$/.test(startDate) ||
-        !/^\d{4}-\d{2}-\d{2}$/.test(endDate)
-      ) {
-        return res.status(400).json({
-          error: 'startDate and endDate are required in YYYY-MM-DD format',
-        });
+      const validationError = validateDateRange({
+        startDate,
+        endDate,
+        formatErrorMessage:
+          'startDate and endDate are required in YYYY-MM-DD format',
+      });
+
+      if (validationError) {
+        return res.status(400).json(validationError);
       }
-      if (startDate > endDate) {
-        return res
-          .status(400)
-          .json({ error: 'startDate must be before or equal to endDate' });
-      }
+
       const repository = new TransactionRepository();
       const useCase = new GetTransactionStatement(repository);
       const data = await useCase.execute({

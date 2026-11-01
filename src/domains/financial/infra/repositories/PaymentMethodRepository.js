@@ -1,6 +1,13 @@
 import { AppDataSource } from '../../../../shared/infra/typeorm/data-source.js';
 import { PaymentMethodSchema } from '../../../../shared/infra/typeorm/schemas/PaymentMethodSchema.js';
 
+function getLast30DaysRange() {
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - 30);
+  const endDate = new Date();
+  return { startDate, endDate };
+}
+
 export class PaymentMethodRepository {
   constructor(transactionSchema, installmentSchema) {
     this.paymentMethodRepository =
@@ -10,9 +17,8 @@ export class PaymentMethodRepository {
   }
 
   async getTopPaymentMethods(userId) {
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - 30);
-    const endDate = new Date();
+    const { startDate, endDate } = getLast30DaysRange();
+
     return await this.transactionRepository
       .createQueryBuilder('transaction')
       .innerJoin('transaction.installment', 'installment')
@@ -34,9 +40,7 @@ export class PaymentMethodRepository {
   }
 
   async getAllPaymentMethods(userId) {
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - 30);
-    const endDate = new Date();
+    const { startDate, endDate } = getLast30DaysRange();
 
     return await this.transactionRepository
       .createQueryBuilder('transaction')

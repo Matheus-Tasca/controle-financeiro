@@ -52,29 +52,32 @@ function changeMonth(delta) {
   loadDashboardData();
 }
 
-function getMonthDateRange(year, month) {
-  const pad = (n) => String(n).padStart(2, '0');
-  const startDate = `${year}-${pad(month + 1)}-01`;
-  const lastDay = new Date(year, month + 1, 0).getDate();
-  const endDate = `${year}-${pad(month + 1)}-${pad(lastDay)}`;
-  return { startDate, endDate, lastDay };
+const padWithZero = (value) => String(value).padStart(2, '0');
+
+function getMonthDateRange(year, monthIndex) {
+  const formattedMonth = padWithZero(monthIndex + 1);
+  const startDate = `${year}-${formattedMonth}-01`;
+  const lastDayOfMonth = new Date(year, monthIndex + 1, 0).getDate();
+  const endDate = `${year}-${formattedMonth}-${padWithZero(lastDayOfMonth)}`;
+  return { startDate, endDate, lastDay: lastDayOfMonth };
 }
 
-function updateMonthHeader(year, month, lastDay) {
+function updateMonthHeader(year, monthIndex, lastDay) {
   const titleEl = document.getElementById('current-month-title');
   const periodEl = document.getElementById('current-period-dates');
 
-  const date = new Date(year, month, 1);
+  const date = new Date(year, monthIndex, 1);
   const monthName = date.toLocaleDateString('pt-BR', { month: 'long' });
-  const capitalized = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+  const capitalizedMonth =
+    monthName.charAt(0).toUpperCase() + monthName.slice(1);
 
   if (titleEl) {
-    titleEl.textContent = `${capitalized} de ${year}`;
+    titleEl.textContent = `${capitalizedMonth} de ${year}`;
   }
 
   if (periodEl) {
-    const pad = (n) => String(n).padStart(2, '0');
-    periodEl.textContent = `01/${pad(month + 1)}/${year} a ${pad(lastDay)}/${pad(month + 1)}/${year}`;
+    const formattedMonth = padWithZero(monthIndex + 1);
+    periodEl.textContent = `01/${formattedMonth}/${year} a ${padWithZero(lastDay)}/${formattedMonth}/${year}`;
   }
 }
 
@@ -86,13 +89,13 @@ async function loadDashboardData() {
   updateMonthHeader(currentYear, currentMonth, lastDay);
 
   const API_URL = window.API_BASE_URL;
-  const API_ROUTE_SUMMARY = `${API_URL}/financial/dashboard?startDate=${startDate}&endDate=${endDate}`;
-  const API_ROUTE_TOP_CATEGORIES = `${API_URL}/financial/dashboard/top-categories?startDate=${startDate}&endDate=${endDate}`;
+  const summaryEndpoint = `${API_URL}/financial/dashboard?startDate=${startDate}&endDate=${endDate}`;
+  const topCategoriesEndpoint = `${API_URL}/financial/dashboard/top-categories?startDate=${startDate}&endDate=${endDate}`;
 
   try {
     const [responseSummary, responseCategories] = await Promise.all([
-      fetch(API_ROUTE_SUMMARY),
-      fetch(API_ROUTE_TOP_CATEGORIES),
+      fetch(summaryEndpoint),
+      fetch(topCategoriesEndpoint),
     ]);
 
     if (!responseSummary.ok || !responseCategories.ok) {
@@ -184,9 +187,9 @@ function updateCategoriesTable(categories) {
   );
 }
 
-function formatBRL(value) {
+function formatBRL(valueInCents) {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL',
-  }).format(Number(value || 0) / 100);
+  }).format(Number(valueInCents || 0) / 100);
 }

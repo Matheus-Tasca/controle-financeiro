@@ -1,6 +1,7 @@
 /**
  * @typedef {Object} UpdateCardDTO
  * @property {string} id
+ * @property {string} userId
  * @property {string} [name]
  * @property {number} [closingDay]
  * @property {number} [dueDay]
@@ -21,14 +22,13 @@ export class UpdateCardUseCase {
     }
 
     const card = await this.repository.findById(id, userId);
-
     if (!card) {
       throw new Error('Card not found');
     }
 
     if (name && name !== card.name) {
-      const existsWithName = await this.repository.findByName(name, userId);
-      if (existsWithName) {
+      const cardWithSameName = await this.repository.findByName(name, userId);
+      if (cardWithSameName) {
         throw new Error('Card name already in use');
       }
       card.name = name;

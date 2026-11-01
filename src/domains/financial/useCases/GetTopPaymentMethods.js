@@ -7,7 +7,9 @@ export class GetTopPaymentMethods {
     try {
       return await this.repository.getTopPaymentMethods(userId);
     } catch (error) {
-      throw new Error(`Error getting top payment methods ${error}`);
+      throw new Error(
+        `Error getting top payment methods: ${error.message || error}`
+      );
     }
   }
 }

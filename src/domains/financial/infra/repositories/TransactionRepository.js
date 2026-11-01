@@ -42,9 +42,9 @@ export class TransactionRepository {
   async save(transaction) {
     if (transaction.installment && transaction.installment.length > 0) {
       return await AppDataSource.transaction(async (manager) => {
-        const saved = await manager.save(TransactionSchema, transaction);
+        const savedTransaction = await manager.save(TransactionSchema, transaction);
         await manager.save(InstallmentSchema, transaction.installment);
-        return saved;
+        return savedTransaction;
       });
     }
     return this.transactionRepository.save(transaction);
@@ -80,36 +80,36 @@ export class TransactionRepository {
     const result = await this.transactionRepository
       .createQueryBuilder('transaction')
       .innerJoin('transaction.installment', 'installment')
-      .select('SUM(installment.amount)', 'value')
+      .select('SUM(installment.amount)', 'totalExpenses')
       .where('installment.dueDate BETWEEN :startDate AND :endDate', {
         startDate,
         endDate,
       })
       .andWhere('transaction.userId = :userId', { userId })
-      .andWhere('transaction.transactionType = :exitType', {
-        exitType: 'saida',
+      .andWhere('transaction.transactionType = :transactionType', {
+        transactionType: 'saida',
       })
       .getRawOne();
 
-    return Number(result?.value) || 0;
+    return Number(result?.totalExpenses) || 0;
   }
 
   async getDashboardIncomes(userId, startDate, endDate) {
     const result = await this.transactionRepository
       .createQueryBuilder('transaction')
       .innerJoin('transaction.installment', 'installment')
-      .select('SUM(installment.amount)', 'value')
+      .select('SUM(installment.amount)', 'totalIncomes')
       .where('installment.dueDate BETWEEN :startDate AND :endDate', {
         startDate,
         endDate,
       })
       .andWhere('transaction.userId = :userId', { userId })
-      .andWhere('transaction.transactionType = :enterType', {
-        enterType: 'entrada',
+      .andWhere('transaction.transactionType = :transactionType', {
+        transactionType: 'entrada',
       })
       .getRawOne();
 
-    return Number(result?.value) || 0;
+    return Number(result?.totalIncomes) || 0;
   }
 
   async getTopCategories(userId, startDate, endDate) {
@@ -124,7 +124,9 @@ export class TransactionRepository {
         endDate,
       })
       .andWhere('transaction.userId = :userId', { userId })
-      .andWhere('transaction.transactionType = :type', { type: 'saida' })
+      .andWhere('transaction.transactionType = :transactionType', {
+        transactionType: 'saida',
+      })
       .groupBy('category.description')
       .orderBy('total', 'DESC')
       .limit(5)

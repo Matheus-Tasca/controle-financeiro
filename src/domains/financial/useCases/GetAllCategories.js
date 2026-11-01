@@ -7,7 +7,7 @@ export class GetAllCategories {
     try {
       return await this.repository.getAllCategories(userId);
     } catch (error) {
-      throw new Error(`Error getting all categories ${error}`);
+      throw new Error(`Error getting all categories: ${error.message || error}`);
     }
   }
 }

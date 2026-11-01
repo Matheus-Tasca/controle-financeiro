@@ -41,15 +41,18 @@ export class CardRepository {
       .createQueryBuilder('card')
       .leftJoin('card.transactions', 'transaction')
       .addSelect('COUNT(transaction.id)', 'transactionsCount')
+      .where('card.userId = :userId', { userId })
+      .groupBy('card.id')
       .orderBy('card.name', 'ASC');
-    query.where('card.userId = :userId', { userId });
-    if (activeOnly) query.andWhere('card.active = :active', { active: true });
-    query.groupBy('card.id');
 
-    const { entities, raw } = await query.getRawAndEntities();
-    return entities.map((card, index) => ({
+    if (activeOnly) {
+      query.andWhere('card.active = :active', { active: true });
+    }
+
+    const { entities: cards, raw: rawResults } = await query.getRawAndEntities();
+    return cards.map((card, index) => ({
       ...card,
-      transactionsCount: Number(raw[index].transactionsCount || 0),
+      transactionsCount: Number(rawResults[index]?.transactionsCount || 0),
     }));
   }
 }

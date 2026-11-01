@@ -1,7 +1,7 @@
 /**
  * @typedef {Object} UpdateTransactionDTO
  * @property {string} id
- * @property {string} [name]
+ * @property {string} userId
  * @property {string} [description]
  * @property {string} [categoryId]
  * @property {string} [transactionType]
@@ -35,7 +35,6 @@ export class UpdateTransactionUseCase {
     }
 
     const transaction = await this.repository.findById(id, userId);
-
     if (!transaction) {
       throw new Error('Transaction not found');
     }
@@ -46,29 +45,67 @@ export class UpdateTransactionUseCase {
     ) {
       throw new Error('Entry category not found');
     }
+
     if (cardId && !(await this.repository.cardBelongsToUser(cardId, userId))) {
       throw new Error('Card not found');
     }
 
-    if (description !== undefined) transaction.description = description;
-    if (categoryId) transaction.categoryId = categoryId;
-    if (transactionType) transaction.transactionType = transactionType;
-    if (date) transaction.date = new Date(date);
-    if (paymentMethodId) transaction.paymentMethodId = paymentMethodId;
-    if (cardId !== undefined) transaction.cardId = cardId;
-    transaction.updatedAt = new Date();
+    this.applyTransactionUpdates(transaction, {
+      description,
+      categoryId,
+      transactionType,
+      date,
+      paymentMethodId,
+      cardId,
+    });
 
-    if (transaction.installment && transaction.installment.length === 1) {
-      const singleInstallment = transaction.installment[0];
-      if (date) {
-        singleInstallment.dueDate = new Date(date);
-      }
-      if (amount !== undefined && amount !== null && Number(amount) > 0) {
-        singleInstallment.amount = Math.round(Number(amount));
-      }
-      singleInstallment.updatedAt = new Date();
-    }
+    this.syncSingleInstallment(transaction, { date, amount });
 
     return await this.repository.save(transaction);
+  }
+
+  applyTransactionUpdates(transaction, updates) {
+    if (updates.description !== undefined) {
+      transaction.description = updates.description;
+    }
+    if (updates.categoryId) {
+      transaction.categoryId = updates.categoryId;
+    }
+    if (updates.transactionType) {
+      transaction.transactionType = updates.transactionType;
+    }
+    if (updates.date) {
+      transaction.date = new Date(updates.date);
+    }
+    if (updates.paymentMethodId) {
+      transaction.paymentMethodId = updates.paymentMethodId;
+    }
+    if (updates.cardId !== undefined) {
+      transaction.cardId = updates.cardId;
+    }
+    transaction.updatedAt = new Date();
+  }
+
+  syncSingleInstallment(transaction, { date, amount }) {
+    const hasSingleInstallment =
+      Array.isArray(transaction.installment) &&
+      transaction.installment.length === 1;
+
+    if (!hasSingleInstallment) {
+      return;
+    }
+
+    const singleInstallment = transaction.installment[0];
+    if (date) {
+      singleInstallment.dueDate = new Date(date);
+    }
+
+    const hasValidAmount =
+      amount !== undefined && amount !== null && Number(amount) > 0;
+    if (hasValidAmount) {
+      singleInstallment.amount = Math.round(Number(amount));
+    }
+
+    singleInstallment.updatedAt = new Date();
   }
 }

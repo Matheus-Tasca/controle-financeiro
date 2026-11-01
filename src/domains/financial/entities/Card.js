@@ -17,7 +17,7 @@ export class Card {
     this.closingDay = closingDay;
     this.dueDay = dueDay;
     this.active = active ?? true;
-    this.createdAt = new Date();
-    this.updatedAt = new Date();
+    this.createdAt = createdAt || new Date();
+    this.updatedAt = updatedAt || new Date();
   }
 }

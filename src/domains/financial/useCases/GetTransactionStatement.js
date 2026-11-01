@@ -26,6 +26,21 @@ export class GetTransactionStatement {
       categoryId: record.categoryId || null,
       paymentMethodId: record.paymentMethodId || null,
       cardId: record.cardId || null,
+    const transactions = rows.map((row) => ({
+      transactionId: row.transactionId,
+      installmentId: row.installmentId,
+      description: row.description || '',
+      transactionType: row.transactionType,
+      transactionDate: toDateString(row.transactionDate),
+      dueDate: toDateString(row.dueDate),
+      amount: Number(row.amount),
+      installmentNumber: Number(row.installmentNumber),
+      totalInstallments: Number(row.totalInstallments),
+      cardName: row.cardName || null,
+      categoryName: row.categoryName || null,
+      categoryId: row.categoryId || null,
+      paymentMethodId: row.paymentMethodId || null,
+      cardId: row.cardId || null,
     }));
 
     const summary = transactions.reduce(

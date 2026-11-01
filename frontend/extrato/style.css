@@ -22,62 +22,6 @@ button:focus-visible {
   text-align: center;
 }
 
-.chart-scroll {
-  min-height: 14rem;
-  overflow-x: auto;
-  border-bottom: 1px solid rgb(75 85 99);
-}
-
-.chart-bars {
-  display: flex;
-  align-items: flex-end;
-  gap: 0.75rem;
-  min-width: max-content;
-  height: 13rem;
-  padding: 0.5rem 0.25rem 0;
-}
-
-.chart-item {
-  display: flex;
-  width: 4.25rem;
-  height: 100%;
-  flex: 0 0 auto;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.35rem;
-}
-
-.chart-value {
-  max-width: 100%;
-  overflow: hidden;
-  color: rgb(209 213 219);
-  font-size: 0.625rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.chart-bar-track {
-  display: flex;
-  width: 2rem;
-  height: 9rem;
-  align-items: flex-end;
-}
-
-.chart-bar {
-  width: 100%;
-  min-height: 0.2rem;
-  border-radius: 0.4rem 0.4rem 0 0;
-  background: rgb(248 113 113);
-  transition: height 180ms ease;
-}
-
-.chart-label {
-  color: rgb(156 163 175);
-  font-size: 0.625rem;
-  white-space: nowrap;
-}
-
 #transactions-table-body tr + tr {
   border-top: 1px solid rgb(55 65 81);
 }

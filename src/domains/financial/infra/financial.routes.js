@@ -5,6 +5,7 @@ import { EntryCategoryController } from './controllers/EntryCategoryController.j
 import { PaymentMethodController } from './controllers/PaymentMethodController.js';
 import { ThirdPartyController } from './controllers/ThirdPartyController.js';
 import { ThirdPartyDebtController } from './controllers/ThirdPartyDebtController.js';
+import { InvestmentController } from './controllers/InvestmentController.js';
 import { authenticationMiddleware } from '../../../shared/infra/auth/authenticationMiddleware.js';
 
 const financialRouter = express.Router();
@@ -15,6 +16,7 @@ const entryCategoryController = new EntryCategoryController();
 const paymentMethodController = new PaymentMethodController();
 const thirdPartyController = new ThirdPartyController();
 const thirdPartyDebtController = new ThirdPartyDebtController();
+const investmentController = new InvestmentController();
 
 financialRouter.post('/cards', (req, res) =>
   cardController.createCard(req, res)
@@ -91,6 +93,24 @@ financialRouter.patch('/third-party-debts/installments/:id/payment', (req, res) 
 );
 financialRouter.get('/third-party-debts/statement', (req, res) =>
   thirdPartyDebtController.getStatement(req, res)
+// Rotas de Investimentos
+financialRouter.get('/investments/summary', (req, res) =>
+  investmentController.getSummary(req, res)
+);
+financialRouter.get('/investments/banks', (req, res) =>
+  investmentController.getAllBanks(req, res)
+);
+financialRouter.post('/investments/banks', (req, res) =>
+  investmentController.createBank(req, res)
+);
+financialRouter.put('/investments/banks/:id', (req, res) =>
+  investmentController.updateBank(req, res)
+);
+financialRouter.delete('/investments/banks/:id', (req, res) =>
+  investmentController.deleteBank(req, res)
+);
+financialRouter.post('/investments/movements', (req, res) =>
+  investmentController.createMovement(req, res)
 );
 
 export default financialRouter;

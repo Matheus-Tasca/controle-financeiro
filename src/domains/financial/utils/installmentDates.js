@@ -2,8 +2,10 @@
  * Utilitários de datas para parcelas de cartão de crédito.
  *
  * Regras:
- * - Se o dia da compra for maior que o dia de fechamento, a 1ª parcela vai
- *   para o mês seguinte.
+ * - Se o dia de vencimento for menor que o dia de fechamento, a fatura vence
+ *   no mês seguinte ao do fechamento (+1 mês).
+ * - Se o dia da compra for maior que o dia de fechamento, a compra entra
+ *   na fatura seguinte (+1 mês).
  * - Cada parcela seguinte vence um mês após a anterior.
  * - Se o mês não possuir o dia de vencimento (ex.: dia 31 em fevereiro),
  *   o vencimento é jogado para o dia 1 do mês seguinte.
@@ -66,9 +68,12 @@ export function calculateInstallmentDueDates({
     .split('-')
     .map(Number);
 
-  let firstInstallmentMonthIndex = month - 1;
-  if (purchaseDay > closingDay) {
-    firstInstallmentMonthIndex += 1;
+  let firstMonthIndex = month - 1;
+  if (dueDay < closingDay) {
+    firstMonthIndex += 1;
+  }
+  if (day > closingDay) {
+    firstMonthIndex += 1;
   }
 
   const installmentDueDates = [];

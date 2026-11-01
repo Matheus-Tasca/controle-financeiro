@@ -6,7 +6,28 @@ import {
   isValidDay,
 } from '../../src/domains/financial/utils/installmentDates.js';
 
-test('calcula parcelas antes e depois do fechamento do cartão', () => {
+test('calcula parcelas antes e depois do fechamento quando vencimento é posterior ao fechamento', () => {
+  assert.deepEqual(
+    calculateInstallmentDueDates({
+      transactionDate: '2026-05-10',
+      closingDay: 10,
+      dueDay: 20,
+      totalInstallments: 3,
+    }),
+    ['2026-05-20', '2026-06-20', '2026-07-20']
+  );
+  assert.deepEqual(
+    calculateInstallmentDueDates({
+      transactionDate: '2026-05-15',
+      closingDay: 10,
+      dueDay: 20,
+      totalInstallments: 2,
+    }),
+    ['2026-06-20', '2026-07-20']
+  );
+});
+
+test('calcula parcelas quando vencimento é menor que o fechamento (avança para o mês seguinte)', () => {
   assert.deepEqual(
     calculateInstallmentDueDates({
       transactionDate: '2026-05-10',
@@ -14,7 +35,7 @@ test('calcula parcelas antes e depois do fechamento do cartão', () => {
       dueDay: 15,
       totalInstallments: 3,
     }),
-    ['2026-05-15', '2026-06-15', '2026-07-15']
+    ['2026-06-15', '2026-07-15', '2026-08-15']
   );
   assert.deepEqual(
     calculateInstallmentDueDates({
@@ -23,7 +44,26 @@ test('calcula parcelas antes e depois do fechamento do cartão', () => {
       dueDay: 15,
       totalInstallments: 2,
     }),
-    ['2026-06-15', '2026-07-15']
+    ['2026-07-15', '2026-08-15']
+  );
+  // Caso de compra após o fechamento quando o vencimento é no início do mês
+  assert.deepEqual(
+    calculateInstallmentDueDates({
+      transactionDate: '2026-10-26',
+      closingDay: 25,
+      dueDay: 1,
+      totalInstallments: 2,
+    }),
+    ['2026-12-01', '2027-01-01']
+  );
+  assert.deepEqual(
+    calculateInstallmentDueDates({
+      transactionDate: '2026-10-20',
+      closingDay: 25,
+      dueDay: 1,
+      totalInstallments: 2,
+    }),
+    ['2026-11-01', '2026-12-01']
   );
 });
 

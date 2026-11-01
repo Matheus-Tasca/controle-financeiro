@@ -93,6 +93,7 @@ financialRouter.patch('/third-party-debts/installments/:id/payment', (req, res) 
 );
 financialRouter.get('/third-party-debts/statement', (req, res) =>
   thirdPartyDebtController.getStatement(req, res)
+);
 // Rotas de Investimentos
 financialRouter.get('/investments/summary', (req, res) =>
   investmentController.getSummary(req, res)

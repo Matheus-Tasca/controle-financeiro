@@ -68,12 +68,12 @@ export function calculateInstallmentDueDates({
     .split('-')
     .map(Number);
 
-  let firstMonthIndex = month - 1;
+  let firstInstallmentMonthIndex = month - 1;
   if (dueDay < closingDay) {
-    firstMonthIndex += 1;
+    firstInstallmentMonthIndex += 1;
   }
-  if (day > closingDay) {
-    firstMonthIndex += 1;
+  if (purchaseDay > closingDay) {
+    firstInstallmentMonthIndex += 1;
   }
 
   const installmentDueDates = [];

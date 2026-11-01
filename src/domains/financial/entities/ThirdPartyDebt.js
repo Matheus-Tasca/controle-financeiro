@@ -13,7 +13,7 @@ export class ThirdPartyDebt {
     cardId = null,
     createdAt,
     updatedAt,
-    installments = [],
+    installments,
   } = {}) {
     this.id = id || randomUUID();
     this.userId = userId;
@@ -26,6 +26,8 @@ export class ThirdPartyDebt {
     this.cardId = cardId;
     this.createdAt = createdAt || new Date();
     this.updatedAt = updatedAt || new Date();
-    this.installments = installments;
+    if (installments) {
+      this.installments = installments;
+    }
   }
 }
